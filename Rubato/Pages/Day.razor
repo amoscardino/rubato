@@ -1,0 +1,31 @@
+﻿@page "/"
+@page "/day"
+@page "/day/{date:datetime?}"
+@inherits CancellableComponentBase
+@inject DayService DayService
+@code {
+    [Parameter] public DateTime? Date { get; set; }
+
+    public DayModel DayModel { get; set; } = new();
+
+    private bool IsLoading { get; set; } = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        DayModel = await DayService.GetDayAsync(DateOnly.FromDateTime(Date ?? DateTime.Today), CancellationToken);
+        IsLoading = false;
+    }
+}
+
+@if (IsLoading)
+{
+    <PageTitleWithSuffix>Loading...</PageTitleWithSuffix>
+
+    <Loader />
+}
+else
+{
+    <PageTitleWithSuffix>@DayModel.Date.ToString("yyyy-MM-dd")</PageTitleWithSuffix>
+
+    <h1>@DayModel.Date.ToShortDateString()</h1>
+}

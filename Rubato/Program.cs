@@ -1,10 +1,14 @@
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Rubato.Data;
+using Rubato.Pages;
+using Rubato.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllersWithViews();
+builder.Services
+    .AddRazorComponents()
+    .AddInteractiveServerComponents();
 
 builder.Services.AddDbContext<RubatoDataContext>(options =>
 {
@@ -19,6 +23,8 @@ builder.Services.AddDbContext<RubatoDataContext>(options =>
 
 builder.Services.AddDataProtection().PersistKeysToDbContext<RubatoDataContext>();
 
+builder.Services.AddTransient<DayService>();
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
@@ -30,7 +36,6 @@ using (var scope = app.Services.CreateScope())
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Error/Index");
     app.UseHsts();
 }
 
@@ -40,7 +45,6 @@ app.UseAuthorization();
 app.UseAntiforgery();
 app.MapStaticAssets();
 
-app.MapControllerRoute(name: "default", pattern: "{controller=Home}/{action=Index}/{id?}")
-    .WithStaticAssets();
+app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
 
 app.Run();

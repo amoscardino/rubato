@@ -44,24 +44,21 @@ namespace Rubato.Data.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Description")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<double>("Duration")
+                    b.Property<double?>("Duration")
                         .HasColumnType("REAL");
 
-                    b.Property<long>("ProjectId")
+                    b.Property<long?>("ProjectId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("SortOrder")
+                    b.Property<int?>("SortOrder")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("TaskId")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Time")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -94,9 +91,7 @@ namespace Rubato.Data.Migrations
                 {
                     b.HasOne("Rubato.Data.Models.Project", "Project")
                         .WithMany("Entries")
-                        .HasForeignKey("ProjectId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("ProjectId");
 
                     b.Navigation("Project");
                 });
