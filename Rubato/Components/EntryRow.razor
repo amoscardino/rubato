@@ -1,0 +1,107 @@
+@inherits CancellableComponentBase
+@inject EntryService EntryService
+@code {
+    [Parameter] public EntryModel Entry { get; set; } = new();
+
+    [Parameter] public List<ProjectModel> Projects { get; set; } = new();
+
+    [Parameter] public EventCallback OnEntryChanged { get; set; }
+
+    private bool IsSaving { get; set; } = false;
+
+    private string ProjectSelectStyle => Entry.ProjectId.HasValue
+        ? $"--bs-border-color: {Projects.FirstOrDefault(p => p.Id == Entry.ProjectId)?.Color}"
+        : string.Empty;
+
+    private async Task UpdateTimeAsync()
+    {
+        Entry.Duration = Entry.GetDuration();
+        await SaveEntryAsync();
+    }
+
+    private async Task SaveEntryAsync()
+    {
+        IsSaving = true;
+        StateHasChanged();
+
+        await EntryService.UpdateEntryAsync(Entry, CancellationToken);
+
+        IsSaving = false;
+        StateHasChanged();
+        
+        // Notify the parent component that the entry has been deleted
+        if (OnEntryChanged.HasDelegate)
+        {
+            await OnEntryChanged.InvokeAsync();
+        }
+    }
+
+    private async Task DeleteEntryAsync()
+    {
+        IsSaving = true;
+        StateHasChanged();
+
+        await EntryService.DeleteEntryAsync(Entry.Id, CancellationToken);
+
+        // Notify the parent component that the entry has been deleted
+        if (OnEntryChanged.HasDelegate)
+        {
+            await OnEntryChanged.InvokeAsync();
+        }
+    }
+}
+
+<div class="row g-2">
+    <div class="col-1">
+        <textarea @bind="Entry.Time"
+                  @bind:after="UpdateTimeAsync"
+                  class="form-control form-control-sm"
+                  rows="@Entry.TimeRows"></textarea>
+    </div>
+    <div class="col-1">
+        <input type="text"
+               value="@Entry.Duration?.ToString("N2")"
+               class="form-control form-control-sm text-end"
+               disabled />
+    </div>
+    <div class="col-2">
+        <select @bind="Entry.ProjectId"
+                @bind:after="SaveEntryAsync"
+                class="form-select form-select-sm"
+                style="@ProjectSelectStyle">
+            <option value=""></option>
+            @foreach (var project in Projects)
+            {
+                <option value="@project.Id">@project.Name</option>
+            }
+        </select>
+    </div>
+    <div class="col-1">
+        <input @bind="Entry.TaskId"
+               @bind:after="SaveEntryAsync"
+               type="text"
+               class="form-control form-control-sm" />
+    </div>
+    <div class="col">
+        <input @bind="Entry.Description"
+               @bind:after="SaveEntryAsync"
+               type="text"
+               class="form-control form-control-sm" />
+    </div>
+    <div class="col-1">
+        <input @bind="Entry.SortOrder"
+               @bind:after="SaveEntryAsync"
+               type="text"
+               inputmode="numeric"
+               pattern="[0-9]*"
+               class="form-control form-control-sm" />
+    </div>
+    <div class="col-auto">
+        <button type="button"
+                class="btn btn-sm btn-outline-danger"
+                @onclick="DeleteEntryAsync"
+                disabled="@IsSaving">
+            <i class="bi bi-trash"></i>
+        </button>
+    </div>
+</div>

@@ -1,19 +1,71 @@
 ﻿@page "/"
 @page "/day"
-@page "/day/{date:datetime?}"
+@page "/day/{dateparam:datetime?}"
 @inherits CancellableComponentBase
-@inject DayService DayService
+@inject EntryService EntryService
+@inject ProjectService ProjectService
+@inject NavigationManager NavigationManager
 @code {
-    [Parameter] public DateTime? Date { get; set; }
+    [Parameter] public DateTime? DateParam { get; set; }
 
-    public DayModel DayModel { get; set; } = new();
+    public DateOnly Date => DateOnly.FromDateTime(DateParam ?? DateTime.Today);
+
+    private bool IsToday => Date == DateOnly.FromDateTime(DateTime.Today);
+
+    public List<EntryModel> Entries { get; set; } = [];
+
+    public List<ProjectModel> Projects { get; set; } = [];
 
     private bool IsLoading { get; set; } = true;
 
-    protected override async Task OnInitializedAsync()
+    private double TotalHours => Entries.Sum(e => e.Duration ?? 0);
+
+    protected override async Task OnParametersSetAsync()
     {
-        DayModel = await DayService.GetDayAsync(DateOnly.FromDateTime(Date ?? DateTime.Today), CancellationToken);
-        IsLoading = false;
+        Projects = await ProjectService.GetProjectsAsync(CancellationToken);
+        await LoadDayAsync();
+    }
+
+    private async Task OnEntryChangedAsync()
+    {
+        await LoadDayAsync(false);
+    }
+
+    private async Task LoadDayAsync(bool showLoading = true)
+    {
+        if (showLoading)
+        {
+            IsLoading = true;
+            StateHasChanged();
+        }
+
+        Entries = await EntryService.GetEntriesAsync(Date, CancellationToken);
+
+        if (showLoading)
+        {
+            IsLoading = false;
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task AddEntry()
+    {
+        var entryId = await EntryService.CreateEntryAsync(Date, CancellationToken);
+
+        Entries.Add(new EntryModel
+        {
+            Id = entryId,
+            Date = Date
+        });
+
+        StateHasChanged();
+    }
+
+    private async Task CopyEntriesAsync()
+    {
+        await EntryService.CopyFromPreviousDayAsync(CancellationToken);
+        await LoadDayAsync();
     }
 }
 
@@ -25,7 +77,64 @@
 }
 else
 {
-    <PageTitleWithSuffix>@DayModel.Date.ToString("yyyy-MM-dd")</PageTitleWithSuffix>
+    <PageTitleWithSuffix>@(Date.ToString("yyyy-MM-dd"))</PageTitleWithSuffix>
 
-    <h1>@DayModel.Date.ToShortDateString()</h1>
+    <div class="vstack gap-3">
+        <div class="row">
+            <div class="col-auto">
+                <NavButtons Date="Date" />
+            </div>
+
+            <div class="col text-end">
+                <button type="button" class="btn btn-primary btn-sm" @onclick="AddEntry">
+                    Add Entry
+                </button>
+            </div>
+        </div>
+
+        <div class="vstack gap-2">
+            <div class="row g-2 align-items-end border-bottom pb-2">
+                <div class="col-1">
+                    Time
+                </div>
+                <div class="col-1">
+                    Hours
+                </div>
+                <div class="col-2">
+                    Project
+                </div>
+                <div class="col-1">
+                    Task ID
+                </div>
+                <div class="col">
+                    Description
+                </div>
+                <div class="col-1">
+                    Sort
+                </div>
+                <div class="col-auto">
+                    <button type="button"
+                            class="btn btn-sm btn-outline-secondary"
+                            @onclick="CopyEntriesAsync"
+                            disabled="@(!IsToday || Entries.Any())">
+                        <i class=" bi bi-copy"></i>
+                    </button>
+                </div>
+            </div>
+
+            @foreach (var entry in Entries.OrderBy(e => e.SortOrder.GetValueOrDefault(int.MaxValue)).ThenBy(e => e.Time))
+            {
+                <EntryRow Entry="entry" Projects="Projects" OnEntryChanged="OnEntryChangedAsync" />
+            }
+
+            <div class="row">
+                <div class="col-2 text-end">
+                    Total:
+                    <strong class="@(TotalHours > 8 ? "text-success" : "")">
+                        @TotalHours.ToString("N2")
+                    </strong>
+                </div>
+            </div>
+        </div>
+    </div>
 }

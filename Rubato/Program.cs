@@ -23,7 +23,8 @@ builder.Services.AddDbContext<RubatoDataContext>(options =>
 
 builder.Services.AddDataProtection().PersistKeysToDbContext<RubatoDataContext>();
 
-builder.Services.AddTransient<DayService>();
+builder.Services.AddTransient<EntryService>();
+builder.Services.AddTransient<ProjectService>();
 
 var app = builder.Build();
 
