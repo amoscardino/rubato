@@ -1,10 +1,9 @@
-﻿@page "/"
+@page "/"
 @page "/day"
 @page "/day/{dateparam:datetime?}"
 @inherits CancellableComponentBase
 @inject EntryService EntryService
 @inject ProjectService ProjectService
-@inject NavigationManager NavigationManager
 @code {
     [Parameter] public DateTime? DateParam { get; set; }
 
@@ -18,7 +17,7 @@
 
     private bool IsLoading { get; set; } = true;
 
-    private double TotalHours => Entries.Sum(e => e.Duration ?? 0);
+    private bool CanCopy => IsToday && Entries.Count == 0;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -49,7 +48,7 @@
         StateHasChanged();
     }
 
-    private async Task AddEntry()
+    private async Task AddEntryAsync()
     {
         var entryId = await EntryService.CreateEntryAsync(Date, CancellationToken);
 
@@ -80,61 +79,12 @@ else
     <PageTitleWithSuffix>@(Date.ToString("yyyy-MM-dd"))</PageTitleWithSuffix>
 
     <div class="vstack gap-3">
-        <div class="row">
-            <div class="col-auto">
-                <NavButtons Date="Date" />
-            </div>
+        <DayToolbar Date="Date" OnAddEntry="AddEntryAsync" />
 
-            <div class="col text-end">
-                <button type="button" class="btn btn-primary btn-sm" @onclick="AddEntry">
-                    Add Entry
-                </button>
-            </div>
-        </div>
-
-        <div class="vstack gap-2">
-            <div class="row g-2 align-items-end border-bottom pb-2">
-                <div class="col-1">
-                    Time
-                </div>
-                <div class="col-1">
-                    Hours
-                </div>
-                <div class="col-2">
-                    Project
-                </div>
-                <div class="col-1">
-                    Task ID
-                </div>
-                <div class="col">
-                    Description
-                </div>
-                <div class="col-1">
-                    Sort
-                </div>
-                <div class="col-auto">
-                    <button type="button"
-                            class="btn btn-sm btn-outline-secondary"
-                            @onclick="CopyEntriesAsync"
-                            disabled="@(!IsToday || Entries.Any())">
-                        <i class=" bi bi-copy"></i>
-                    </button>
-                </div>
-            </div>
-
-            @foreach (var entry in Entries.OrderBy(e => e.SortOrder.GetValueOrDefault(int.MaxValue)).ThenBy(e => e.Time))
-            {
-                <EntryRow Entry="entry" Projects="Projects" OnEntryChanged="OnEntryChangedAsync" />
-            }
-
-            <div class="row">
-                <div class="col-2 text-end">
-                    Total:
-                    <strong class="@(TotalHours > 8 ? "text-success" : "")">
-                        @TotalHours.ToString("N2")
-                    </strong>
-                </div>
-            </div>
-        </div>
+        <EntryList Entries="Entries"
+                   Projects="Projects"
+                   OnEntryChanged="OnEntryChangedAsync"
+                   CanCopy="CanCopy"
+                   OnCopy="CopyEntriesAsync" />
     </div>
 }

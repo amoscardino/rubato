@@ -1,0 +1,61 @@
+@code {
+    [Parameter] public List<EntryModel> Entries { get; set; } = [];
+
+    [Parameter] public List<ProjectModel> Projects { get; set; } = [];
+
+    [Parameter] public EventCallback OnEntryChanged { get; set; }
+
+    [Parameter] public bool CanCopy { get; set; }
+
+    [Parameter] public EventCallback OnCopy { get; set; }
+
+    private double TotalHours => Entries.Sum(e => e.Duration ?? 0);
+
+    private IEnumerable<EntryModel> OrderedEntries =>
+        Entries.OrderBy(e => e.SortOrder.GetValueOrDefault(int.MaxValue)).ThenBy(e => e.Time);
+}
+
+<div class="vstack gap-2">
+    <div class="row g-2 align-items-end border-bottom pb-2">
+        <div class="col-1">
+            Time
+        </div>
+        <div class="col-1">
+            Hours
+        </div>
+        <div class="col-2">
+            Project
+        </div>
+        <div class="col-1">
+            Task ID
+        </div>
+        <div class="col">
+            Description
+        </div>
+        <div class="col-1">
+            Sort
+        </div>
+        <div class="col-auto">
+            <button type="button"
+                    class="btn btn-sm btn-outline-secondary"
+                    @onclick="OnCopy"
+                    disabled="@(!CanCopy)">
+                <i class="bi bi-copy"></i>
+            </button>
+        </div>
+    </div>
+
+    @foreach (var entry in OrderedEntries)
+    {
+        <EntryRow Entry="entry" Projects="Projects" OnEntryChanged="OnEntryChanged" />
+    }
+
+    <div class="row">
+        <div class="col-2 text-end">
+            Total:
+            <strong class="@(TotalHours > 8 ? "text-success" : "")">
+                @TotalHours.ToString("N2")
+            </strong>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,17 @@
+@code {
+    [Parameter] public DateOnly Date { get; set; }
+
+    [Parameter] public EventCallback OnAddEntry { get; set; }
+}
+
+<div class="row">
+    <div class="col-auto">
+        <NavButtons Date="Date" />
+    </div>
+
+    <div class="col text-end">
+        <button type="button" class="btn btn-primary btn-sm" @onclick="OnAddEntry">
+            Add Entry
+        </button>
+    </div>
+</div>
