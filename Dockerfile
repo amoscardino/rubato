@@ -1,3 +1,14 @@
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+ARG configuration=Release
+WORKDIR /src
+COPY . .
+RUN dotnet restore "rubato.slnx"
+RUN dotnet build "rubato.slnx" -c $configuration -o /app/build
+
+FROM build AS publish
+ARG configuration=Release
+RUN dotnet publish "rubato.slnx" -c $configuration -o /app/publish /p:UseAppHost=false
+
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
 WORKDIR /app
 EXPOSE 5161
@@ -11,18 +22,6 @@ ENV DataPath=/etc/rubato
 VOLUME /etc/rubato
 
 USER app
-FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:10.0 AS build
-ARG configuration=Release
-WORKDIR /src
-COPY ["Rubato.csproj", "./"]
-RUN dotnet restore "Rubato.csproj"
-COPY . .
-WORKDIR "/src/."
-RUN dotnet build "Rubato.csproj" -c $configuration -o /app/build
-
-FROM build AS publish
-ARG configuration=Release
-RUN dotnet publish "Rubato.csproj" -c $configuration -o /app/publish /p:UseAppHost=false
 
 FROM base AS final
 WORKDIR /app
