@@ -11,6 +11,8 @@
 
     private double TotalHours => Entries.Sum(e => e.Duration ?? 0);
 
+    private bool HasInvalidTimes => Entries.Any(e => e.HasInvalidTime);
+
     private IEnumerable<EntryModel> OrderedEntries =>
         Entries.OrderBy(e => e.SortOrder.GetValueOrDefault(int.MaxValue)).ThenBy(e => e.Time);
 }
@@ -61,5 +63,13 @@
                 @TotalHours.ToString("N2")
             </strong>
         </div>
+
+        @if (HasInvalidTimes)
+        {
+            <div class="col text-danger small">
+                <i class="bi bi-exclamation-triangle"></i>
+                Some times could not be read and are not counted.
+            </div>
+        }
     </div>
 </div>

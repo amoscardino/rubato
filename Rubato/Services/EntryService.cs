@@ -5,11 +5,14 @@ using Rubato.Models;
 
 namespace Rubato.Services;
 
-public class EntryService(RubatoDataContext dataContext)
+public class EntryService(IDbContextFactory<RubatoDataContext> dataContextFactory)
 {
     public async Task<List<EntryModel>> GetEntriesAsync(DateOnly date, CancellationToken cancellationToken = default)
     {
+        await using var dataContext = await dataContextFactory.CreateDbContextAsync(cancellationToken);
+
         return await dataContext.Entries
+            .AsNoTracking()
             .Where(e => e.Date == date)
             .OrderBy(e => e.SortOrder)
             .Select(e => EntryModel.FromData(e))
@@ -18,6 +21,8 @@ public class EntryService(RubatoDataContext dataContext)
 
     public async Task<long> CreateEntryAsync(DateOnly date, CancellationToken cancellationToken = default)
     {
+        await using var dataContext = await dataContextFactory.CreateDbContextAsync(cancellationToken);
+
         var entry = new Entry
         {
             Date = date,
@@ -29,9 +34,22 @@ public class EntryService(RubatoDataContext dataContext)
         return entry.Id;
     }
 
-    public async Task UpdateEntryAsync(EntryModel entryModel, CancellationToken cancellationToken = default)
+    /// <summary>
+    /// Writes the model back over the stored entry. Returns false when the entry is no longer there
+    /// — another tab may have deleted it while this one still had the row on screen, and a save
+    /// racing a delete should not be an error the user has to see.
+    /// </summary>
+    public async Task<bool> UpdateEntryAsync(EntryModel entryModel, CancellationToken cancellationToken = default)
     {
-        var entryData = await dataContext.Entries.FirstAsync(e => e.Id == entryModel.Id, cancellationToken);
+        await using var dataContext = await dataContextFactory.CreateDbContextAsync(cancellationToken);
+
+        var entryData = await dataContext.Entries
+            .FirstOrDefaultAsync(e => e.Id == entryModel.Id, cancellationToken);
+
+        if (entryData is null)
+        {
+            return false;
+        }
 
         entryData.Date = entryModel.Date;
         entryData.Time = entryModel.Time;
@@ -42,10 +60,14 @@ public class EntryService(RubatoDataContext dataContext)
         entryData.SortOrder = entryModel.SortOrder;
 
         await dataContext.SaveChangesAsync(cancellationToken);
+
+        return true;
     }
 
     public async Task DeleteEntryAsync(long entryId, CancellationToken cancellationToken = default)
     {
+        await using var dataContext = await dataContextFactory.CreateDbContextAsync(cancellationToken);
+
         var entryData = await dataContext.Entries
             .FirstOrDefaultAsync(e => e.Id == entryId, cancellationToken);
 
@@ -56,8 +78,45 @@ public class EntryService(RubatoDataContext dataContext)
         }
     }
 
+    /// <summary>
+    /// Rewrites any stored duration that disagrees with what the parser now makes of that entry's
+    /// time text, and returns how many rows changed. The column is only ever a copy of a derived
+    /// value, so rows last written by an older parser can hold hours that no longer follow from
+    /// their time field — including negative ones from overnight ranges. Nothing recomputes them
+    /// otherwise until that row's time is edited again. Idempotent: a second run finds nothing.
+    /// </summary>
+    public async Task<int> ReconcileDurationsAsync(CancellationToken cancellationToken = default)
+    {
+        await using var dataContext = await dataContextFactory.CreateDbContextAsync(cancellationToken);
+
+        var entries = await dataContext.Entries.ToListAsync(cancellationToken);
+        var changed = 0;
+
+        foreach (var entry in entries)
+        {
+            var duration = EntryModel.FromData(entry).Duration;
+
+            if (entry.Duration.Equals(duration))
+            {
+                continue;
+            }
+
+            entry.Duration = duration;
+            changed++;
+        }
+
+        if (changed > 0)
+        {
+            await dataContext.SaveChangesAsync(cancellationToken);
+        }
+
+        return changed;
+    }
+
     public async Task CopyFromPreviousDayAsync(CancellationToken cancellationToken = default)
     {
+        await using var dataContext = await dataContextFactory.CreateDbContextAsync(cancellationToken);
+
         var today = DateOnly.FromDateTime(DateTime.Now);
 
         var previousDate = await dataContext.Entries
@@ -72,6 +131,7 @@ public class EntryService(RubatoDataContext dataContext)
         }
 
         var previousDayEntries = await dataContext.Entries
+            .AsNoTracking()
             .Where(e => e.Date == previousDate)
             .ToListAsync(cancellationToken);
 

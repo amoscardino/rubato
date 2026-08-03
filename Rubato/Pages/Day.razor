@@ -17,7 +17,12 @@
 
     private bool IsLoading { get; set; } = true;
 
-    private bool CanCopy => IsToday && Entries.Count == 0;
+    private bool IsCopying { get; set; } = false;
+
+    // Copying is only offered for an empty today. IsCopying matters because the entry count does not
+    // change until the copy finishes, so without it the button stays live and a second click copies
+    // the previous day a second time.
+    private bool CanCopy => IsToday && Entries.Count == 0 && !IsCopying;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -63,7 +68,29 @@
 
     private async Task CopyEntriesAsync()
     {
-        await EntryService.CopyFromPreviousDayAsync(CancellationToken);
+        // The disabled attribute is a client-side hint, and clicks queued before the first render of
+        // IsCopying still arrive here, so re-check before touching the database.
+        if (!CanCopy)
+        {
+            return;
+        }
+
+        IsCopying = true;
+        StateHasChanged();
+
+        try
+        {
+            await EntryService.CopyFromPreviousDayAsync(CancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+        finally
+        {
+            IsCopying = false;
+        }
+
         await LoadDayAsync();
     }
 }

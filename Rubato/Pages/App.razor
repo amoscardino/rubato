@@ -16,6 +16,18 @@
     <meta name="apple-mobile-web-app-title" content="Rubato" />
     <link rel="manifest" href="@Assets["icons/site.webmanifest"]" />
 
+    <style>
+        /* Blazor reveals this by setting display: block when the circuit fails. */
+        #blazor-error-ui {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 1050;
+        }
+    </style>
+
     <HeadOutlet @rendermode="InteractiveServer" />
 </head>
 
@@ -23,6 +35,11 @@
     <main>
         <Routes @rendermode="InteractiveServer" />
     </main>
+
+    <div id="blazor-error-ui" class="alert alert-danger rounded-0 border-0 mb-0 text-center">
+        An unhandled error has occurred.
+        <a href="" class="alert-link">Reload</a>
+    </div>
 
     <script src="_framework/blazor.web.js"></script>
     <script>

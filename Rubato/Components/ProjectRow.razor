@@ -5,14 +5,33 @@
 
     private bool IsSaving { get; set; } = false;
 
+    private string? SaveError { get; set; }
+
     private async Task SaveProjectAsync()
     {
         IsSaving = true;
+        SaveError = null;
         StateHasChanged();
 
-        await ProjectService.UpdateProjectAsync(Project, CancellationToken);
+        try
+        {
+            await ProjectService.UpdateProjectAsync(Project, CancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            // The component is going away, so there is nothing left to render.
+            return;
+        }
+        catch (Exception ex)
+        {
+            // An exception escaping an event handler would take the whole circuit down.
+            SaveError = ex.Message;
+        }
+        finally
+        {
+            IsSaving = false;
+        }
 
-        IsSaving = false;
         StateHasChanged();
     }
 }
@@ -32,4 +51,11 @@
                class="form-control form-control-color form-control-sm"
                title="Project color" />
     </div>
+
+    @if (SaveError is not null)
+    {
+        <div class="col-auto text-danger" title="@($"Not saved: {SaveError}")">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+        </div>
+    }
 </div>

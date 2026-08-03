@@ -14,30 +14,50 @@
 
     private bool JustCopied { get; set; } = false;
 
+    private string? SaveError { get; set; }
+
     private int _copyCount = 0;
 
     private string ProjectSelectStyle => Entry.ProjectId.HasValue
         ? $"--bs-border-color: {Projects.FirstOrDefault(p => p.Id == Entry.ProjectId)?.Color}"
         : string.Empty;
 
-    private async Task UpdateTimeAsync()
-    {
-        Entry.Duration = Entry.GetDuration();
-        await SaveEntryAsync();
-    }
+    private static string? InvalidTimeMessage(IReadOnlyList<string> invalidLines)
+        => invalidLines.Count == 0
+            ? null
+            : $"Not a time range, so it adds no hours: {string.Join(", ", invalidLines)}";
 
     private async Task SaveEntryAsync()
     {
         IsSaving = true;
+        SaveError = null;
         StateHasChanged();
 
-        await EntryService.UpdateEntryAsync(Entry, CancellationToken);
+        try
+        {
+            await EntryService.UpdateEntryAsync(Entry, CancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            // The component is going away, so there is nothing left to render or notify. Returning
+            // before StateHasChanged also keeps us from rendering a component being disposed.
+            return;
+        }
+        catch (Exception ex)
+        {
+            // An exception escaping an event handler takes the whole circuit down with it, so the
+            // row reports the failure itself and stays usable.
+            SaveError = ex.Message;
+        }
+        finally
+        {
+            IsSaving = false;
+        }
 
-        IsSaving = false;
         StateHasChanged();
-        
-        // Notify the parent component that the entry has been deleted
-        if (OnEntryChanged.HasDelegate)
+
+        // Notify the parent component that the entry has changed
+        if (SaveError is null && OnEntryChanged.HasDelegate)
         {
             await OnEntryChanged.InvokeAsync();
         }
@@ -45,7 +65,20 @@
 
     private async Task CopyToClipboardAsync()
     {
-        await JS.InvokeVoidAsync("copyToClipboard", CancellationToken, Entry.ClipboardText);
+        try
+        {
+            await JS.InvokeVoidAsync("copyToClipboard", CancellationToken, Entry.ClipboardText);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+        catch (JSException)
+        {
+            SaveError = "Could not copy to the clipboard.";
+            StateHasChanged();
+            return;
+        }
 
         var copy = ++_copyCount;
         JustCopied = true;
@@ -73,30 +106,46 @@
     private async Task DeleteEntryAsync()
     {
         IsSaving = true;
+        SaveError = null;
         StateHasChanged();
 
         try
         {
             await EntryService.DeleteEntryAsync(Entry.Id, CancellationToken);
         }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+        catch (Exception ex)
+        {
+            SaveError = ex.Message;
+        }
         finally
         {
             IsSaving = false;
         }
 
+        StateHasChanged();
+
         // Notify the parent component that the entry has been deleted
-        if (OnEntryChanged.HasDelegate)
+        if (SaveError is null && OnEntryChanged.HasDelegate)
         {
             await OnEntryChanged.InvokeAsync();
         }
     }
 }
 
+@{
+    var invalidTimeLines = Entry.InvalidTimeLines;
+}
+
 <div class="row g-2">
     <div class="col-1">
         <textarea @bind="Entry.Time"
-                  @bind:after="UpdateTimeAsync"
-                  class="form-control form-control-sm"
+                  @bind:after="SaveEntryAsync"
+                  class="form-control form-control-sm @(invalidTimeLines.Count > 0 ? "border-danger" : "")"
+                  title="@InvalidTimeMessage(invalidTimeLines)"
                   rows="@Entry.TimeRows"></textarea>
     </div>
     <div class="col-1">
@@ -146,6 +195,14 @@
                pattern="[0-9]*"
                class="form-control form-control-sm" />
     </div>
+    @if (SaveError is not null)
+    {
+        <div class="col-auto d-flex align-items-center text-danger"
+             title="@($"Not saved: {SaveError}")">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+        </div>
+    }
+
     <div class="col-auto">
         <button type="button"
                 class="btn btn-sm btn-outline-danger"
