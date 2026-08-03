@@ -62,7 +62,7 @@ else
 
             @foreach (var project in ProjectList)
             {
-                <ProjectRow Project="project" />
+                <ProjectRow @key="project.Id" Project="project" />
             }
         </div>
     </div>

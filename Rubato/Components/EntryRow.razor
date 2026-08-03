@@ -41,7 +41,14 @@
         IsSaving = true;
         StateHasChanged();
 
-        await EntryService.DeleteEntryAsync(Entry.Id, CancellationToken);
+        try
+        {
+            await EntryService.DeleteEntryAsync(Entry.Id, CancellationToken);
+        }
+        finally
+        {
+            IsSaving = false;
+        }
 
         // Notify the parent component that the entry has been deleted
         if (OnEntryChanged.HasDelegate)
