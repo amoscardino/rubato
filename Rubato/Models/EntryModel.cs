@@ -18,6 +18,23 @@ public partial class EntryModel
 
     public int TimeRows => Time?.Split(["\r\n", "\r", "\n"], StringSplitOptions.None).Length ?? 1;
 
+    /// <summary>
+    /// The entry formatted for copying: "TaskId - Description", or just the description when there is no task ID.
+    /// </summary>
+    public string ClipboardText
+    {
+        get
+        {
+            var taskId = TaskId?.Trim();
+            var description = Description?.Trim();
+
+            if (string.IsNullOrWhiteSpace(taskId))
+                return description ?? string.Empty;
+
+            return string.IsNullOrWhiteSpace(description) ? taskId : $"{taskId} - {description}";
+        }
+    }
+
     public static EntryModel FromData(Entry entry)
         => new()
         {

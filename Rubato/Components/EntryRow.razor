@@ -1,5 +1,6 @@
 @inherits CancellableComponentBase
 @inject EntryService EntryService
+@inject IJSRuntime JS
 @code {
     [Parameter] public EntryModel Entry { get; set; } = new();
 
@@ -7,7 +8,13 @@
 
     [Parameter] public EventCallback OnEntryChanged { get; set; }
 
+    private static readonly TimeSpan CopiedFeedbackDuration = TimeSpan.FromSeconds(2);
+
     private bool IsSaving { get; set; } = false;
+
+    private bool JustCopied { get; set; } = false;
+
+    private int _copyCount = 0;
 
     private string ProjectSelectStyle => Entry.ProjectId.HasValue
         ? $"--bs-border-color: {Projects.FirstOrDefault(p => p.Id == Entry.ProjectId)?.Color}"
@@ -34,6 +41,33 @@
         {
             await OnEntryChanged.InvokeAsync();
         }
+    }
+
+    private async Task CopyToClipboardAsync()
+    {
+        await JS.InvokeVoidAsync("copyToClipboard", CancellationToken, Entry.ClipboardText);
+
+        var copy = ++_copyCount;
+        JustCopied = true;
+        StateHasChanged();
+
+        try
+        {
+            await Task.Delay(CopiedFeedbackDuration, CancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+
+        // A later copy is now responsible for clearing the checkmark
+        if (copy != _copyCount)
+        {
+            return;
+        }
+
+        JustCopied = false;
+        StateHasChanged();
     }
 
     private async Task DeleteEntryAsync()
@@ -90,10 +124,19 @@
                class="form-control form-control-sm" />
     </div>
     <div class="col">
-        <input @bind="Entry.Description"
-               @bind:after="SaveEntryAsync"
-               type="text"
-               class="form-control form-control-sm" />
+        <div class="input-group input-group-sm">
+            <input @bind="Entry.Description"
+                   @bind:after="SaveEntryAsync"
+                   type="text"
+                   class="form-control form-control-sm" />
+            <button type="button"
+                    class="btn @(JustCopied ? "btn-outline-success" : "btn-outline-secondary")"
+                    title="@(JustCopied ? "Copied" : "Copy to clipboard")"
+                    @onclick="CopyToClipboardAsync"
+                    disabled="@(string.IsNullOrWhiteSpace(Entry.ClipboardText))">
+                <i class="bi @(JustCopied ? "bi-clipboard-check" : "bi-clipboard")"></i>
+            </button>
+        </div>
     </div>
     <div class="col-1">
         <input @bind="Entry.SortOrder"
