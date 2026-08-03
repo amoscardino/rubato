@@ -1,0 +1,35 @@
+@inherits CancellableComponentBase
+@inject ProjectService ProjectService
+@code {
+    [Parameter] public ProjectModel Project { get; set; } = new();
+
+    private bool IsSaving { get; set; } = false;
+
+    private async Task SaveProjectAsync()
+    {
+        IsSaving = true;
+        StateHasChanged();
+
+        await ProjectService.UpdateProjectAsync(Project, CancellationToken);
+
+        IsSaving = false;
+        StateHasChanged();
+    }
+}
+
+<div class="row g-2 align-items-center">
+    <div class="col">
+        <input @bind="Project.Name"
+               @bind:after="SaveProjectAsync"
+               type="text"
+               class="form-control form-control-sm" />
+    </div>
+
+    <div class="col-auto">
+        <input @bind="Project.Color"
+               @bind:after="SaveProjectAsync"
+               type="color"
+               class="form-control form-control-color form-control-sm"
+               title="Project color" />
+    </div>
+</div>

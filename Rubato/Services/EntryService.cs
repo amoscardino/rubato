@@ -59,38 +59,36 @@ public class EntryService(RubatoDataContext dataContext)
     public async Task CopyFromPreviousDayAsync(CancellationToken cancellationToken = default)
     {
         var today = DateOnly.FromDateTime(DateTime.Now);
-        var targetDate = today.AddDays(-1);
 
-        while (true)
+        var previousDate = await dataContext.Entries
+            .Where(e => e.Date < today)
+            .OrderByDescending(e => e.Date)
+            .Select(e => (DateOnly?)e.Date)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (previousDate is null)
         {
-            var previousDayEntries = await dataContext.Entries
-                .Where(e => e.Date == targetDate)
-                .ToListAsync(cancellationToken);
-
-            if (previousDayEntries.Count == 0)
-            {
-                targetDate = targetDate.AddDays(-1);
-                continue;
-            }
-
-            foreach (var entry in previousDayEntries)
-            {
-                var newEntry = new Entry
-                {
-                    Date = today,
-                    Time = entry.Time,
-                    Duration = entry.Duration,
-                    ProjectId = entry.ProjectId,
-                    TaskId = entry.TaskId,
-                    Description = entry.Description,
-                    SortOrder = entry.SortOrder
-                };
-
-                dataContext.Entries.Add(newEntry);
-            }
-
-            await dataContext.SaveChangesAsync(cancellationToken);
-            break;
+            return;
         }
+
+        var previousDayEntries = await dataContext.Entries
+            .Where(e => e.Date == previousDate)
+            .ToListAsync(cancellationToken);
+
+        foreach (var entry in previousDayEntries)
+        {
+            dataContext.Entries.Add(new Entry
+            {
+                Date = today,
+                Time = entry.Time,
+                Duration = entry.Duration,
+                ProjectId = entry.ProjectId,
+                TaskId = entry.TaskId,
+                Description = entry.Description,
+                SortOrder = entry.SortOrder
+            });
+        }
+
+        await dataContext.SaveChangesAsync(cancellationToken);
     }
 }

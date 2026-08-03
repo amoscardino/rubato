@@ -1,0 +1,69 @@
+@page "/projects"
+@inherits CancellableComponentBase
+@inject ProjectService ProjectService
+@code {
+    public List<ProjectModel> ProjectList { get; set; } = [];
+
+    private bool IsLoading { get; set; } = true;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        ProjectList = await ProjectService.GetProjectsAsync(CancellationToken);
+        IsLoading = false;
+    }
+
+    private async Task AddProjectAsync()
+    {
+        var projectId = await ProjectService.CreateProjectAsync(CancellationToken);
+
+        ProjectList.Add(new ProjectModel
+        {
+            Id = projectId
+        });
+
+        StateHasChanged();
+    }
+}
+
+@if (IsLoading)
+{
+    <PageTitleWithSuffix>Loading...</PageTitleWithSuffix>
+
+    <Loader />
+}
+else
+{
+    <PageTitleWithSuffix>Projects</PageTitleWithSuffix>
+
+    <div class="vstack gap-3">
+        <div class="row">
+            <div class="col-auto">
+                <a class="btn btn-outline-secondary btn-sm" href="/">
+                    &lt; Back
+                </a>
+            </div>
+
+            <div class="col text-end">
+                <button type="button" class="btn btn-primary btn-sm" @onclick="AddProjectAsync">
+                    Add Project
+                </button>
+            </div>
+        </div>
+
+        <div class="vstack gap-2">
+            <div class="row g-2 align-items-end border-bottom pb-2">
+                <div class="col">
+                    Name
+                </div>
+                <div class="col-auto">
+                    Color
+                </div>
+            </div>
+
+            @foreach (var project in ProjectList)
+            {
+                <ProjectRow Project="project" />
+            }
+        </div>
+    </div>
+}
