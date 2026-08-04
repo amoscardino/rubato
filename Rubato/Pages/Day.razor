@@ -106,10 +106,21 @@ else
     <PageTitleWithSuffix>@(Date.ToString("yyyy-MM-dd"))</PageTitleWithSuffix>
 
     <div class="vstack gap-3">
-        <DayToolbar Date="Date" OnAddEntry="AddEntryAsync" />
+        <div class="row align-items-end">
+            <div class="col">
+                <h1 class="display-6">
+                    @(Date.ToString("dddd, MMMM d, yyyy"))
+                </h1>
+            </div>
+
+            <div class="col-auto text-end">
+                <NavButtons Date="Date" />
+            </div>
+        </div>
 
         <EntryList Entries="Entries"
                    Projects="Projects"
+                   OnAddEntry="AddEntryAsync"
                    OnEntryChanged="OnEntryChangedAsync"
                    CanCopy="CanCopy"
                    OnCopy="CopyEntriesAsync" />

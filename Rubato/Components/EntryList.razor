@@ -5,6 +5,8 @@
 
     [Parameter] public EventCallback OnEntryChanged { get; set; }
 
+    [Parameter] public EventCallback OnAddEntry { get; set; }
+
     [Parameter] public bool CanCopy { get; set; }
 
     [Parameter] public EventCallback OnCopy { get; set; }
@@ -56,20 +58,36 @@
         <EntryRow @key="entry.Id" Entry="entry" Projects="Projects" OnEntryChanged="OnEntryChanged" />
     }
 
-    <div class="row">
-        <div class="col-2 text-end">
-            Total:
-            <strong class="@(TotalHours >= 8 ? "text-success" : "")">
-                @TotalHours.ToString("N2")
-            </strong>
+    @if (Entries.Count == 0)
+    {
+        <div class="text-center text-muted small py-3">
+            No entries for this day.
         </div>
+    }
 
-        @if (HasInvalidTimes)
+    <div class="row">
+        @if (Entries.Count > 0)
         {
-            <div class="col text-danger small">
-                <i class="bi bi-exclamation-triangle"></i>
-                Some times could not be read and are not counted.
+            <div class="col-2 text-end">
+                Total:
+                <strong class="@(TotalHours >= 8 ? "text-success" : "")">
+                    @TotalHours.ToString("N2")
+                </strong>
             </div>
+
+            @if (HasInvalidTimes)
+            {
+                <div class="col text-danger small">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    Some times could not be read and are not counted.
+                </div>
+            }
         }
+
+        <div class="col text-end">
+            <button type="button" class="btn btn-primary btn-sm" @onclick="OnAddEntry">
+                Add Entry
+            </button>
+        </div>
     </div>
 </div>
