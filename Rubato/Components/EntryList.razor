@@ -3,6 +3,12 @@
 
     [Parameter] public List<ProjectModel> Projects { get; set; } = [];
 
+    /// <summary>
+    /// Hours for the whole Monday-start week this day sits in. It spans days this component does not
+    /// have entries for, so the parent computes it.
+    /// </summary>
+    [Parameter] public double WeekTotalHours { get; set; }
+
     [Parameter] public EventCallback OnEntryChanged { get; set; }
 
     [Parameter] public EventCallback OnAddEntry { get; set; }
@@ -69,10 +75,18 @@
         @if (Entries.Count > 0)
         {
             <div class="col-2 text-end">
-                Total:
-                <strong class="@(TotalHours >= 8 ? "text-success" : "")">
-                    @TotalHours.ToString("N2")
-                </strong>
+                <div>
+                    Total:
+                    <strong class="@(TotalHours >= 8 ? "text-success" : "")">
+                        @TotalHours.ToString("N2")
+                    </strong>
+                </div>
+                <div>
+                    Week:
+                    <strong class="@(WeekTotalHours >= 40 ? "text-success" : "")">
+                        @WeekTotalHours.ToString("N2")
+                    </strong>
+                </div>
             </div>
 
             @if (HasInvalidTimes)

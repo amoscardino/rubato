@@ -19,6 +19,28 @@ public class EntryService(IDbContextFactory<RubatoDataContext> dataContextFactor
             .ToListAsync(cancellationToken);
     }
 
+    /// <summary>
+    /// Sums the hours worked over the Monday-start week containing <paramref name="date"/>. The
+    /// hours come from the parser by way of <see cref="EntryModel.Duration"/> rather than from the
+    /// stored column, so the week total cannot disagree with the day totals it is made of.
+    /// </summary>
+    public async Task<double> GetWeekTotalAsync(DateOnly date, CancellationToken cancellationToken = default)
+    {
+        await using var dataContext = await dataContextFactory.CreateDbContextAsync(cancellationToken);
+
+        // DayOfWeek counts from Sunday, so shift by 6 to land the week on Monday.
+        var weekStart = date.AddDays(-(((int)date.DayOfWeek + 6) % 7));
+        var weekEnd = weekStart.AddDays(7);
+
+        var entries = await dataContext.Entries
+            .AsNoTracking()
+            .Where(e => e.Date >= weekStart && e.Date < weekEnd)
+            .Select(e => EntryModel.FromData(e))
+            .ToListAsync(cancellationToken);
+
+        return entries.Sum(e => e.Duration ?? 0);
+    }
+
     public async Task<long> CreateEntryAsync(DateOnly date, CancellationToken cancellationToken = default)
     {
         await using var dataContext = await dataContextFactory.CreateDbContextAsync(cancellationToken);
