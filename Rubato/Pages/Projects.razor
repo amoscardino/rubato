@@ -1,29 +1,5 @@
 @page "/projects"
 @inherits CancellableComponentBase
-@inject ProjectService ProjectService
-@code {
-    public List<ProjectModel> ProjectList { get; set; } = [];
-
-    private bool IsLoading { get; set; } = true;
-
-    protected override async Task OnParametersSetAsync()
-    {
-        ProjectList = await ProjectService.GetProjectsAsync(CancellationToken);
-        IsLoading = false;
-    }
-
-    private async Task AddProjectAsync()
-    {
-        var projectId = await ProjectService.CreateProjectAsync(CancellationToken);
-
-        ProjectList.Add(new ProjectModel
-        {
-            Id = projectId
-        });
-
-        StateHasChanged();
-    }
-}
 
 @if (IsLoading)
 {
@@ -49,6 +25,14 @@ else
                 </button>
             </div>
         </div>
+
+        @if (Error is not null)
+        {
+            <div class="alert alert-danger py-2 mb-0" role="alert">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                @Error
+            </div>
+        }
 
         <div class="vstack gap-2">
             <div class="row g-2 align-items-end border-bottom pb-2">

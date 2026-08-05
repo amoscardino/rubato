@@ -2,101 +2,6 @@
 @page "/day"
 @page "/day/{dateparam:datetime?}"
 @inherits CancellableComponentBase
-@inject EntryService EntryService
-@inject ProjectService ProjectService
-@code {
-    [Parameter] public DateTime? DateParam { get; set; }
-
-    public DateOnly Date => DateOnly.FromDateTime(DateParam ?? DateTime.Today);
-
-    private bool IsToday => Date == DateOnly.FromDateTime(DateTime.Today);
-
-    public List<EntryModel> Entries { get; set; } = [];
-
-    public List<ProjectModel> Projects { get; set; } = [];
-
-    public double WeekTotalHours { get; set; }
-
-    private bool IsLoading { get; set; } = true;
-
-    private bool IsCopying { get; set; } = false;
-
-    // Copying is only offered for an empty today. IsCopying matters because the entry count does not
-    // change until the copy finishes, so without it the button stays live and a second click copies
-    // the previous day a second time.
-    private bool CanCopy => IsToday && Entries.Count == 0 && !IsCopying;
-
-    protected override async Task OnParametersSetAsync()
-    {
-        Projects = await ProjectService.GetProjectsAsync(CancellationToken);
-        await LoadDayAsync();
-    }
-
-    private async Task OnEntryChangedAsync()
-    {
-        await LoadDayAsync(false);
-    }
-
-    private async Task LoadDayAsync(bool showLoading = true)
-    {
-        if (showLoading)
-        {
-            IsLoading = true;
-            StateHasChanged();
-        }
-
-        Entries = await EntryService.GetEntriesAsync(Date, CancellationToken);
-        WeekTotalHours = await EntryService.GetWeekTotalAsync(Date, CancellationToken);
-
-        if (showLoading)
-        {
-            IsLoading = false;
-        }
-
-        StateHasChanged();
-    }
-
-    private async Task AddEntryAsync()
-    {
-        var entryId = await EntryService.CreateEntryAsync(Date, CancellationToken);
-
-        Entries.Add(new EntryModel
-        {
-            Id = entryId,
-            Date = Date
-        });
-
-        StateHasChanged();
-    }
-
-    private async Task CopyEntriesAsync()
-    {
-        // The disabled attribute is a client-side hint, and clicks queued before the first render of
-        // IsCopying still arrive here, so re-check before touching the database.
-        if (!CanCopy)
-        {
-            return;
-        }
-
-        IsCopying = true;
-        StateHasChanged();
-
-        try
-        {
-            await EntryService.CopyFromPreviousDayAsync(CancellationToken);
-        }
-        catch (OperationCanceledException)
-        {
-            return;
-        }
-        finally
-        {
-            IsCopying = false;
-        }
-
-        await LoadDayAsync();
-    }
-}
 
 @if (IsLoading)
 {
@@ -121,12 +26,94 @@ else
             </div>
         </div>
 
-        <EntryList Entries="Entries"
-                   Projects="Projects"
-                   WeekTotalHours="WeekTotalHours"
-                   OnAddEntry="AddEntryAsync"
-                   OnEntryChanged="OnEntryChangedAsync"
-                   CanCopy="CanCopy"
-                   OnCopy="CopyEntriesAsync" />
+        @if (Error is not null)
+        {
+            <div class="alert alert-danger py-2 mb-0" role="alert">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                @Error
+            </div>
+        }
+
+        <div class="vstack gap-2">
+            <div class="row g-2 align-items-end border-bottom pb-2">
+                <div class="col-1">
+                    Time
+                </div>
+                <div class="col-1">
+                    Hours
+                </div>
+                <div class="col-2">
+                    Project
+
+                    <a href="/projects" class="ms-1 small">
+                        Manage
+                    </a>
+                </div>
+                <div class="col-1">
+                    Task ID
+                </div>
+                <div class="col">
+                    Description
+                </div>
+                <div class="col-1">
+                    Sort
+                </div>
+                <div class="col-auto">
+                    <button type="button"
+                            class="btn btn-sm btn-outline-secondary"
+                            title="Copy the previous day's entries"
+                            @onclick="CopyEntriesAsync"
+                            disabled="@(!CanCopy)">
+                        <i class="bi bi-copy"></i>
+                    </button>
+                </div>
+            </div>
+
+            @foreach (var entry in OrderedEntries)
+            {
+                <EntryRow @key="entry.Id" Entry="entry" Projects="Projects" OnEntryChanged="ReloadDayAsync" />
+            }
+
+            @if (Entries.Count == 0)
+            {
+                <div class="text-center text-muted small py-3">
+                    No entries for this day.
+                </div>
+            }
+
+            <div class="row">
+                @if (Entries.Count > 0)
+                {
+                    <div class="col-2 text-end">
+                        <div>
+                            Total:
+                            <strong class="@(TotalHours >= 8 ? "text-success" : "")">
+                                @TotalHours.ToString("N2")
+                            </strong>
+                        </div>
+                        <div>
+                            Week:
+                            <strong class="@(WeekTotalHours >= 40 ? "text-success" : "")">
+                                @WeekTotalHours.ToString("N2")
+                            </strong>
+                        </div>
+                    </div>
+
+                    @if (HasInvalidTimes)
+                    {
+                        <div class="col text-danger small">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            Some times could not be read and are not counted.
+                        </div>
+                    }
+                }
+
+                <div class="col text-end">
+                    <button type="button" class="btn btn-primary btn-sm" @onclick="AddEntryAsync">
+                        Add Entry
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 }

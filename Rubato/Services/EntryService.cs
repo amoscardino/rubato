@@ -7,6 +7,10 @@ namespace Rubato.Services;
 
 public class EntryService(IDbContextFactory<RubatoDataContext> dataContextFactory)
 {
+    /// <summary>
+    /// The day's entries, in no particular order — <c>Day.OrderedEntries</c> is the single place that
+    /// decides how rows are arranged, so imposing an order here would only be overwritten.
+    /// </summary>
     public async Task<List<EntryModel>> GetEntriesAsync(DateOnly date, CancellationToken cancellationToken = default)
     {
         await using var dataContext = await dataContextFactory.CreateDbContextAsync(cancellationToken);
@@ -14,15 +18,14 @@ public class EntryService(IDbContextFactory<RubatoDataContext> dataContextFactor
         return await dataContext.Entries
             .AsNoTracking()
             .Where(e => e.Date == date)
-            .OrderBy(e => e.SortOrder)
             .Select(e => EntryModel.FromData(e))
             .ToListAsync(cancellationToken);
     }
 
     /// <summary>
-    /// Sums the hours worked over the Monday-start week containing <paramref name="date"/>. The
-    /// hours come from the parser by way of <see cref="EntryModel.Duration"/> rather than from the
-    /// stored column, so the week total cannot disagree with the day totals it is made of.
+    /// Sums the hours worked over the Monday-start week containing <paramref name="date"/>, from the
+    /// parser rather than the stored column so the week total cannot disagree with the day totals it
+    /// is made of.
     /// </summary>
     public async Task<double> GetWeekTotalAsync(DateOnly date, CancellationToken cancellationToken = default)
     {
@@ -135,14 +138,17 @@ public class EntryService(IDbContextFactory<RubatoDataContext> dataContextFactor
         return changed;
     }
 
-    public async Task CopyFromPreviousDayAsync(CancellationToken cancellationToken = default)
+    /// <summary>
+    /// Copies every entry from the most recent earlier day that has any onto <paramref name="date"/>.
+    /// The target day is a parameter rather than "today" so the method stands on its own — the caller
+    /// is the one that decides which days may be copied onto.
+    /// </summary>
+    public async Task CopyFromPreviousDayAsync(DateOnly date, CancellationToken cancellationToken = default)
     {
         await using var dataContext = await dataContextFactory.CreateDbContextAsync(cancellationToken);
 
-        var today = DateOnly.FromDateTime(DateTime.Now);
-
         var previousDate = await dataContext.Entries
-            .Where(e => e.Date < today)
+            .Where(e => e.Date < date)
             .OrderByDescending(e => e.Date)
             .Select(e => (DateOnly?)e.Date)
             .FirstOrDefaultAsync(cancellationToken);
@@ -159,16 +165,10 @@ public class EntryService(IDbContextFactory<RubatoDataContext> dataContextFactor
 
         foreach (var entry in previousDayEntries)
         {
-            dataContext.Entries.Add(new Entry
-            {
-                Date = today,
-                Time = entry.Time,
-                Duration = entry.Duration,
-                ProjectId = entry.ProjectId,
-                TaskId = entry.TaskId,
-                Description = entry.Description,
-                SortOrder = entry.SortOrder
-            });
+            var copy = EntryModel.FromData(entry);
+            copy.Date = date;
+
+            dataContext.Entries.Add(copy.ToData());
         }
 
         await dataContext.SaveChangesAsync(cancellationToken);

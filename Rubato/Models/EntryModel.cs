@@ -13,10 +13,6 @@ public partial class EntryModel
     public long? ProjectId { get; set; }
     public DateOnly Date { get; set; }
 
-    /// <summary>
-    /// The free-text time ranges, one per line. Assigning clears the cached parse, so everything
-    /// derived from it stays in step with the text the user actually typed.
-    /// </summary>
     public string? Time
     {
         get => _time;
@@ -27,30 +23,14 @@ public partial class EntryModel
         }
     }
 
-    /// <summary>
-    /// The hours worked, derived from <see cref="Time"/> on every read rather than stored, so it
-    /// can never disagree with the text it came from. Services persist a copy of it, but no UI
-    /// reads that copy back — see EntryService.ReconcileDurationsAsync for why.
-    /// </summary>
     public double? Duration => ParseTime().TotalHours;
-
     public string? TaskId { get; set; }
     public string? Description { get; set; }
     public int? SortOrder { get; set; }
 
-    public int TimeRows => Time?.Split(["\r\n", "\r", "\n"], StringSplitOptions.None).Length ?? 1;
-
-    /// <summary>
-    /// The lines of <see cref="Time"/> that are not a time range we can read. They add no hours,
-    /// so the UI flags them rather than letting the day total come up quietly short.
-    /// </summary>
     public IReadOnlyList<string> InvalidTimeLines => ParseTime().InvalidLines;
-
     public bool HasInvalidTime => InvalidTimeLines.Count > 0;
 
-    /// <summary>
-    /// The entry formatted for copying: "TaskId - Description", or just the description when there is no task ID.
-    /// </summary>
     public string ClipboardText
     {
         get
@@ -104,12 +84,9 @@ public partial class EntryModel
     private static TimeParseResult Parse(string? time)
     {
         var lines = (time ?? string.Empty)
-            .Split(["\r\n", "\r", "\n"], StringSplitOptions.RemoveEmptyEntries)
-            .Select(x => x.Trim())
-            .Where(x => !string.IsNullOrWhiteSpace(x))
-            .ToList();
+            .Split(LineSeparators, StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
 
-        if (lines.Count == 0)
+        if (lines.Length == 0)
         {
             return new TimeParseResult(null, []);
         }
@@ -146,14 +123,15 @@ public partial class EntryModel
         if (!match.Success)
             return false;
 
-        if (!TryReadClockTime(match, "startHour", "startMinutes", out var startHour, out var startMinutes))
+        if (!TryReadClockTime(match.Groups["startHour"], match.Groups["startMinutes"], out var startHour, out var startMinutes))
             return false;
 
         var minutesOnly = match.Groups["endMinutesOnly"];
+        var endNamesItsOwnHour = minutesOnly.Success;
         int endHour;
         int endMinutes;
 
-        if (minutesOnly.Success)
+        if (endNamesItsOwnHour)
         {
             // "7:15-:30" names only the minutes, so the end sits in the start's own hour.
             endHour = startHour;
@@ -166,7 +144,7 @@ public partial class EntryModel
             // No end time yet, so the entry is still running and has no duration to report.
             return true;
         }
-        else if (!TryReadClockTime(match, "endHour", "endMinutes", out endHour, out endMinutes))
+        else if (!TryReadClockTime(match.Groups["endHour"], match.Groups["endMinutes"], out endHour, out endMinutes))
         {
             return false;
         }
@@ -179,7 +157,7 @@ public partial class EntryModel
         // the equivalent "9:30-8" is accepted, purely because the hours happen to tie. An end hour
         // of 12 or more is already unambiguous and is taken literally, and a minutes-only end has
         // named the start's hour outright, so there is no other hour it could have meant.
-        if (end < start && endHour < 12 && !minutesOnly.Success)
+        if (end < start && endHour < 12 && !endNamesItsOwnHour)
             end += TimeSpan.FromHours(12);
 
         // Still backwards after the afternoon reading: either an unambiguous range running the
@@ -192,15 +170,18 @@ public partial class EntryModel
         return true;
     }
 
-    private static bool TryReadClockTime(Match match, string hourGroupName, string minutesGroupName, out int hour, out int minutes)
+    /// <summary>
+    /// Reads an hour and its optional minutes, rejecting anything out of range. Validating here is
+    /// what keeps unchecked regex captures out of the <see cref="TimeSpan"/> constructors below —
+    /// feeding them straight in is what used to throw out of an event handler and kill the circuit.
+    /// </summary>
+    private static bool TryReadClockTime(Group hourGroup, Group minutesGroup, out int hour, out int minutes)
     {
         hour = 0;
         minutes = 0;
 
-        if (!int.TryParse(match.Groups[hourGroupName].Value, out hour) || hour > 23)
+        if (!int.TryParse(hourGroup.Value, out hour) || hour > 23)
             return false;
-
-        var minutesGroup = match.Groups[minutesGroupName];
 
         if (minutesGroup.Success && (!int.TryParse(minutesGroup.Value, out minutes) || minutes > 59))
             return false;
@@ -214,6 +195,8 @@ public partial class EntryModel
     /// were no lines at all.
     /// </summary>
     public readonly record struct TimeParseResult(double? TotalHours, IReadOnlyList<string> InvalidLines);
+
+    private static readonly string[] LineSeparators = ["\r\n", "\r", "\n"];
 
     // The end time is either absent ("9-"), an hour with optional minutes ("5", "5:30", "530"), or
     // minutes alone against the start's hour (":30"). The last form needs its colon, so that "9-30"

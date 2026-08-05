@@ -1,55 +1,24 @@
-@inject NavigationManager NavigationManager
-@code {
-    [Parameter] public DateOnly Date { get; set; }
-
-    private bool IsToday => Date == DateOnly.FromDateTime(DateTime.Today);
-
-    private void PrevDay()
-    {
-        NavigationManager.NavigateTo($"/day/{Date.AddDays(-1):yyyy-MM-dd}");
-    }
-
-    private void GoToDate(ChangeEventArgs e)
-    {
-        if (DateTime.TryParse(e.Value?.ToString(), out var newDate))
-        {
-            NavigationManager.NavigateTo($"/day/{newDate:yyyy-MM-dd}");
-        }
-    }
-
-    private void NextDay()
-    {
-        NavigationManager.NavigateTo($"/day/{Date.AddDays(1):yyyy-MM-dd}");
-    }
-
-    private void GoToToday()
-    {
-        NavigationManager.NavigateTo($"/day/{DateTime.Today:yyyy-MM-dd}");
-    }
-}
-
 <div class="input-group input-group-sm">
-    <button type="button"
-            class="btn btn-outline-secondary"
-            @onclick="PrevDay">
-        &lt; Prev
-    </button>
+    <a class="btn btn-outline-secondary"
+       href="@DayUrl(Date.AddDays(-1))">
+        <i class="bi bi-chevron-left"></i>
+        Prev
+    </a>
 
-    <button type="button"
-            class="btn btn-outline-secondary"
-            @onclick="GoToToday"
-            disabled="@IsToday">
+    <a class="btn btn-outline-secondary @(IsToday ? "disabled" : "")"
+       href="@DayUrl(Clock.Today)"
+       aria-disabled="@IsToday">
         Today
-    </button>
+    </a>
 
     <input type="date"
-            class="form-control flex-shrink-1"
-            value="@(Date.ToString("yyyy-MM-dd"))"
-            @onchange="GoToDate" />
+           class="form-control flex-shrink-1"
+           value="@(Date.ToString("yyyy-MM-dd"))"
+           @onchange="GoToDate" />
 
-    <button type="button"
-            class="btn btn-outline-secondary"
-            @onclick="NextDay">
-        Next &gt;
-    </button>
+    <a class="btn btn-outline-secondary"
+       href="@DayUrl(Date.AddDays(1))">
+        Next
+        <i class="bi bi-chevron-right"></i>
+    </a>
 </div>

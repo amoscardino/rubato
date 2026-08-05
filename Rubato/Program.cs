@@ -41,9 +41,8 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<RubatoDataContext>();
     db.Database.Migrate();
 
-    // Stored durations are a copy of a value derived from the free-text time field, so rows written
-    // by an older parser can hold hours that no longer follow from their time text. Nothing else
-    // recomputes them until that row is edited again, so square them up here.
+    // Square up stored durations that no longer follow from their time text — see
+    // EntryService.ReconcileDurationsAsync for why they drift and why this runs at every launch.
     var entryService = scope.ServiceProvider.GetRequiredService<EntryService>();
     var reconciled = await entryService.ReconcileDurationsAsync();
 

@@ -14,12 +14,7 @@ public class ProjectService(IDbContextFactory<RubatoDataContext> dataContextFact
         return await dataContext.Projects
             .AsNoTracking()
             .OrderBy(p => p.Name)
-            .Select(p => new ProjectModel
-            {
-                Id = p.Id,
-                Name = p.Name,
-                Color = p.Color
-            })
+            .Select(p => ProjectModel.FromData(p))
             .ToListAsync(cancellationToken);
     }
 
@@ -35,11 +30,7 @@ public class ProjectService(IDbContextFactory<RubatoDataContext> dataContextFact
         return project.Id;
     }
 
-    /// <summary>
-    /// Writes the model back over the stored project. Returns false when the project is no longer
-    /// there, so a save racing a delete from another tab does not surface as an error.
-    /// </summary>
-    public async Task<bool> UpdateProjectAsync(ProjectModel projectModel, CancellationToken cancellationToken = default)
+    public async Task UpdateProjectAsync(ProjectModel projectModel, CancellationToken cancellationToken = default)
     {
         await using var dataContext = await dataContextFactory.CreateDbContextAsync(cancellationToken);
 
@@ -48,14 +39,12 @@ public class ProjectService(IDbContextFactory<RubatoDataContext> dataContextFact
 
         if (projectData is null)
         {
-            return false;
+            return;
         }
 
         projectData.Name = projectModel.Name;
         projectData.Color = projectModel.Color;
 
         await dataContext.SaveChangesAsync(cancellationToken);
-
-        return true;
     }
 }
