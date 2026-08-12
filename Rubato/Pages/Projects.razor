@@ -3,36 +3,71 @@
 
 <PageShell Title="Projects" IsLoading="IsLoading" Error="@Error">
     <Header>
-        <div class="row">
-            <div class="col-auto">
-                <a class="btn btn-outline-secondary btn-sm" href="/">
-                    &lt; Back
-                </a>
+        <div class="row align-items-start">
+            <div class="col">
+                <h1 class="h2 mb-0">
+                    Projects
+                </h1>
             </div>
 
-            <div class="col text-end">
-                <button type="button" class="btn btn-primary btn-sm" @onclick="AddProjectAsync">
-                    Add Project
-                </button>
+            <div class="col-auto text-end">
+                <a class="btn btn-outline-secondary" href="/">
+                    <i class="bi bi-chevron-left"></i>
+                    Back
+                </a>
             </div>
         </div>
     </Header>
 
     <ChildContent>
         <div class="vstack gap-2">
-            <div class="row g-2 align-items-end border-bottom pb-2">
-                <div class="col">
-                    Name
-                </div>
-                <div class="col-auto">
-                    Color
+            <div class="flex-grow-1">
+                <div class="card shadow overflow-hidden">
+                    <div class="card-body p-2">
+                        <table class="table table-borderless table-sm mb-0">
+                            <colgroup>
+                                <col class="col-11" />
+                                <col class="col-1" />
+                            </colgroup>
+
+                            <thead>
+                                <tr>
+                                    <th>
+                                        Name
+                                    </th>
+                                    <th>
+                                        Color
+                                    </th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                @foreach (var project in ProjectList)
+                                {
+                                    <ProjectRow @key="project.Id" Project="project" />
+                                }
+
+                                @if (ProjectList.Count == 0)
+                                {
+                                    <tr>
+                                        <td colspan="2" class="text-center text-muted py-3">
+                                            No projects yet.
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
-            @foreach (var project in ProjectList)
-            {
-                <ProjectRow @key="project.Id" Project="project" />
-            }
+            <div class="row align-items-end">
+                <div class="col text-end">
+                    <button type="button" class="btn btn-primary" @onclick="AddProjectAsync">
+                        Add Project
+                    </button>
+                </div>
+            </div>
         </div>
     </ChildContent>
 </PageShell>

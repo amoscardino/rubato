@@ -1,25 +1,26 @@
 @inherits CancellableComponentBase
 
-<div class="row g-2 align-items-center">
-    <div class="col">
+<tr>
+    <td>
         <input @bind="Project.Name"
                @bind:after="SaveProjectAsync"
                type="text"
                class="form-control form-control-sm" />
-    </div>
 
-    <div class="col-auto">
+        @if (Error is not null)
+        {
+            <div class="alert alert-danger small mt-1 mb-0 p-1">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                @Error
+            </div>
+        }
+    </td>
+
+    <td>
         <input @bind="Project.Color"
                @bind:after="SaveProjectAsync"
                type="color"
                class="form-control form-control-color form-control-sm"
                title="Project color" />
-    </div>
-
-    @if (Error is not null)
-    {
-        <div class="col-auto text-danger" title="@Error">
-            <i class="bi bi-exclamation-triangle-fill"></i>
-        </div>
-    }
-</div>
+    </td>
+</tr>
