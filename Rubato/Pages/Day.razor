@@ -8,7 +8,7 @@
         <div class="row align-items-start">
             <div class="col">
                 <h1 class="fs-3 mb-0">
-                    @(Date.ToString("ddd, MMM d, yyyy"))
+                    @(Date.ToString("ddd MMM d"))
                 </h1>
             </div>
 
@@ -71,29 +71,26 @@
             </div>
 
             <div class="row align-items-end">
-                @if (Entries.Count > 0)
+                <div class="col">
+                    Total:
+                    <strong class="@(TotalHours >= 8 ? "text-success" : "")">
+                        @TotalHours.ToString("N2")
+                    </strong>
+
+                    <br />
+
+                    Week:
+                    <strong class="@(WeekTotalHours >= 40 ? "text-success" : "")">
+                        @WeekTotalHours.ToString("N2")
+                    </strong>
+                </div>
+
+                @if (HasInvalidTimes)
                 {
-                    <div class="col-2">
-                        Total:
-                        <strong class="@(TotalHours >= 8 ? "text-success" : "")">
-                            @TotalHours.ToString("N2")
-                        </strong>
-
-                        <br />
-
-                        Week:
-                        <strong class="@(WeekTotalHours >= 40 ? "text-success" : "")">
-                            @WeekTotalHours.ToString("N2")
-                        </strong>
+                    <div class="col text-center text-danger">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        Some times could not be read and are not counted.
                     </div>
-
-                    @if (HasInvalidTimes)
-                    {
-                        <small class="col text-danger">
-                            <i class="bi bi-exclamation-triangle"></i>
-                            Some times could not be read and are not counted.
-                        </small>
-                    }
                 }
 
                 <div class="col text-end">
