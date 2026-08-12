@@ -14,7 +14,7 @@ else
     <PageTitleWithSuffix>@(Date.ToString("yyyy-MM-dd"))</PageTitleWithSuffix>
 
     <div class="vstack gap-3">
-        <div class="row align-items-end">
+        <div class="row align-items-start">
             <div class="col">
                 <h1 class="display-6">
                     @(Date.ToString("dddd, MMMM d, yyyy"))
@@ -28,7 +28,7 @@ else
 
         @if (Error is not null)
         {
-            <div class="alert alert-danger py-2 mb-0" role="alert">
+            <div class="alert alert-danger" role="alert">
                 <i class="bi bi-exclamation-triangle-fill"></i>
                 @Error
             </div>
@@ -69,42 +69,43 @@ else
                 </div>
             </div>
 
-            @foreach (var entry in OrderedEntries)
-            {
-                <EntryRow @key="entry.Id" Entry="entry" Projects="Projects" OnEntryChanged="ReloadDayAsync" />
-            }
+            <div class="flex-grow-1 vstack gap-2">
+                @foreach (var entry in OrderedEntries)
+                {
+                    <EntryRow @key="entry.Id" Entry="entry" Projects="Projects" OnEntryChanged="ReloadDayAsync" />
+                }
 
-            @if (Entries.Count == 0)
-            {
-                <div class="text-center text-muted small py-3">
-                    No entries for this day.
-                </div>
-            }
+                @if (Entries.Count == 0)
+                {
+                    <div class="text-center text-muted small py-3">
+                        No entries for this day.
+                    </div>
+                }
+            </div>
 
-            <div class="row">
+            <div class="row align-items-end">
                 @if (Entries.Count > 0)
                 {
-                    <div class="col-2 text-end">
-                        <div>
-                            Total:
-                            <strong class="@(TotalHours >= 8 ? "text-success" : "")">
-                                @TotalHours.ToString("N2")
-                            </strong>
-                        </div>
-                        <div>
-                            Week:
-                            <strong class="@(WeekTotalHours >= 40 ? "text-success" : "")">
-                                @WeekTotalHours.ToString("N2")
-                            </strong>
-                        </div>
+                    <div class="col-2">
+                        Total:
+                        <strong class="@(TotalHours >= 8 ? "text-success" : "")">
+                            @TotalHours.ToString("N2")
+                        </strong>
+
+                        <br />
+
+                        Week:
+                        <strong class="@(WeekTotalHours >= 40 ? "text-success" : "")">
+                            @WeekTotalHours.ToString("N2")
+                        </strong>
                     </div>
 
                     @if (HasInvalidTimes)
                     {
-                        <div class="col text-danger small">
+                        <small class="col text-danger">
                             <i class="bi bi-exclamation-triangle"></i>
                             Some times could not be read and are not counted.
-                        </div>
+                        </small>
                     }
                 }
 
