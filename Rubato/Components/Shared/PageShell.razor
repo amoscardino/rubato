@@ -1,0 +1,40 @@
+@code {
+    [Parameter] public string? Title { get; set; }
+    [Parameter] public bool IsLoading { get; set; }
+    [Parameter] public string? Error { get; set; }
+
+    /// <summary>
+    /// The page's top row, rendered above the error alert so a failure does not push the heading and
+    /// its navigation down the page.
+    /// </summary>
+    [Parameter] public RenderFragment? Header { get; set; }
+
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}
+
+@if (IsLoading)
+{
+    <PageTitleWithSuffix>Loading...</PageTitleWithSuffix>
+
+    <Loader />
+}
+else
+{
+    <PageTitleWithSuffix>@Title</PageTitleWithSuffix>
+
+    <div class="vstack gap-3">
+        @Header
+
+        @if (Error is not null)
+        {
+            @* mb-0 because the vstack's gap already spaces this, and Bootstrap's own alert margin
+               would sit on top of it. *@
+            <div class="alert alert-danger py-2 mb-0" role="alert">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                @Error
+            </div>
+        }
+
+        @ChildContent
+    </div>
+}

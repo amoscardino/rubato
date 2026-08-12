@@ -3,21 +3,12 @@
 @page "/day/{dateparam:datetime?}"
 @inherits CancellableComponentBase
 
-@if (IsLoading)
-{
-    <PageTitleWithSuffix>Loading...</PageTitleWithSuffix>
-
-    <Loader />
-}
-else
-{
-    <PageTitleWithSuffix>@(Date.ToString("yyyy-MM-dd"))</PageTitleWithSuffix>
-
-    <div class="vstack gap-3">
+<PageShell Title="@(Date.ToString("yyyy-MM-dd"))" IsLoading="IsLoading" Error="@Error">
+    <Header>
         <div class="row align-items-start">
             <div class="col">
-                <h1 class="display-6">
-                    @(Date.ToString("dddd, MMMM d, yyyy"))
+                <h1 class="fs-3 mb-0">
+                    @(Date.ToString("ddd, MMM d, yyyy"))
                 </h1>
             </div>
 
@@ -25,16 +16,12 @@ else
                 <NavButtons Date="Date" />
             </div>
         </div>
+    </Header>
 
-        @if (Error is not null)
-        {
-            <div class="alert alert-danger" role="alert">
-                <i class="bi bi-exclamation-triangle-fill"></i>
-                @Error
-            </div>
-        }
-
+    <ChildContent>
         <div class="vstack gap-2">
+            @* These column widths have to match the ones EntryRow gives its fields, or the header
+               stops lining up with the rows underneath it. *@
             <div class="row g-2 align-items-end border-bottom pb-2">
                 <div class="col-1">
                     Time
@@ -116,5 +103,5 @@ else
                 </div>
             </div>
         </div>
-    </div>
-}
+    </ChildContent>
+</PageShell>

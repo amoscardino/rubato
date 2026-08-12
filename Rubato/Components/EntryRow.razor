@@ -42,13 +42,7 @@
                    @bind:after="SaveEntryAsync"
                    type="text"
                    class="form-control form-control-sm" />
-            <button type="button"
-                    class="btn @(JustCopied ? "btn-outline-success" : "btn-outline-secondary")"
-                    title="@(JustCopied ? "Copied" : "Copy to clipboard")"
-                    @onclick="CopyToClipboardAsync"
-                    disabled="@(string.IsNullOrWhiteSpace(Entry.ClipboardText))">
-                <i class="bi @(JustCopied ? "bi-clipboard-check" : "bi-clipboard")"></i>
-            </button>
+            <CopyButton Text="@Entry.ClipboardText" />
         </div>
     </div>
 

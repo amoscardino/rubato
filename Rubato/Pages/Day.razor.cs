@@ -33,8 +33,6 @@ public partial class Day
     private IEnumerable<EntryModel> OrderedEntries
         => Entries.OrderBy(e => e.SortOrder.GetValueOrDefault(int.MaxValue)).ThenBy(e => e.Time);
 
-    private bool IsLoading { get; set; } = true;
-
     private bool CanCopy => IsToday && Entries.Count == 0 && !IsBusy;
 
     /// <summary>
@@ -51,27 +49,20 @@ public partial class Day
     /// the new day is fetched.
     /// </summary>
     protected override Task OnParametersSetAsync()
-    {
-        IsLoading = true;
+        => RunInitialLoadAsync(LoadDayAsync, errorPrefix: "Could not load this day");
 
-        return ReloadDayAsync();
-    }
-
+    /// <summary>
+    /// Refetches the day in place, for when a row has just saved. Deliberately not
+    /// <see cref="CancellableComponentBase.RunInitialLoadAsync"/>: the page is already on screen and
+    /// replacing it with the loader on every field edit would make the table flicker.
+    /// </summary>
     private Task ReloadDayAsync()
         => RunGuardedAsync(LoadDayAsync, errorPrefix: "Could not load this day");
 
     private async Task LoadDayAsync(CancellationToken cancellationToken)
     {
-        try
-        {
-            Entries = await EntryService.GetEntriesAsync(Date, cancellationToken);
-            WeekTotalHours = await EntryService.GetWeekTotalAsync(Date, cancellationToken);
-        }
-        finally
-        {
-            // A failed load is still a finished load: drop the loader, or the error has nowhere to show.
-            IsLoading = false;
-        }
+        Entries = await EntryService.GetEntriesAsync(Date, cancellationToken);
+        WeekTotalHours = await EntryService.GetWeekTotalAsync(Date, cancellationToken);
     }
 
     private Task AddEntryAsync()

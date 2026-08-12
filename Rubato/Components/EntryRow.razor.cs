@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Components;
-using Microsoft.JSInterop;
 using Rubato.Models;
 using Rubato.Services;
 
@@ -8,17 +7,10 @@ namespace Rubato.Components;
 public partial class EntryRow
 {
     [Inject] private EntryService EntryService { get; set; } = default!;
-    [Inject] private IJSRuntime JS { get; set; } = default!;
 
     [Parameter] public EntryModel Entry { get; set; } = new();
     [Parameter] public List<ProjectModel> Projects { get; set; } = [];
     [Parameter] public EventCallback OnEntryChanged { get; set; }
-
-    private static readonly TimeSpan CopiedFeedbackDuration = TimeSpan.FromSeconds(2);
-
-    private bool JustCopied { get; set; }
-
-    private int CopyCount { get; set; }
 
     private string ProjectSelectStyle
         => Entry.ProjectId.HasValue
@@ -42,50 +34,4 @@ public partial class EntryRow
 
     private Task DeleteEntryAsync()
         => RunGuardedAsync(token => EntryService.DeleteEntryAsync(Entry.Id, token), OnEntryChanged, "Not deleted");
-
-    /// <summary>
-    /// Copies the entry and shows a check for a couple of seconds. Hand-written rather than guarded:
-    /// there is no busy state to hold for a clipboard write, and the failure has a message of its own
-    /// rather than an exception to relay.
-    /// </summary>
-    private async Task CopyToClipboardAsync()
-    {
-        try
-        {
-            await JS.InvokeVoidAsync("copyToClipboard", CancellationToken, Entry.ClipboardText);
-        }
-        catch (OperationCanceledException)
-        {
-            return;
-        }
-        catch (JSException)
-        {
-            Error = "Could not copy to the clipboard.";
-            StateHasChanged();
-            return;
-        }
-
-        var copy = ++CopyCount;
-        Error = null;
-        JustCopied = true;
-        StateHasChanged();
-
-        try
-        {
-            await Task.Delay(CopiedFeedbackDuration, CancellationToken);
-        }
-        catch (OperationCanceledException)
-        {
-            return;
-        }
-
-        // A later copy is now responsible for clearing the check
-        if (copy != CopyCount)
-        {
-            return;
-        }
-
-        JustCopied = false;
-        StateHasChanged();
-    }
 }

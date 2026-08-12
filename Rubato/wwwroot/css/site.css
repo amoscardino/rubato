@@ -1,0 +1,4 @@
+body {
+  --bs-body-font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace;
+  --bs-body-font-size: 14px;
+}

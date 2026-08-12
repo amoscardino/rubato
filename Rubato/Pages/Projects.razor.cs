@@ -10,23 +10,10 @@ public partial class Projects
 
     private List<ProjectModel> ProjectList { get; set; } = [];
 
-    private bool IsLoading { get; set; } = true;
-
     protected override Task OnInitializedAsync()
-        => RunGuardedAsync(LoadProjectsAsync, errorPrefix: "Could not load projects");
-
-    private async Task LoadProjectsAsync(CancellationToken cancellationToken)
-    {
-        try
-        {
-            ProjectList = await ProjectService.GetProjectsAsync(cancellationToken);
-        }
-        finally
-        {
-            // A failed load is still a finished load: drop the loader, or the error has nowhere to show.
-            IsLoading = false;
-        }
-    }
+        => RunInitialLoadAsync(
+            async token => ProjectList = await ProjectService.GetProjectsAsync(token),
+            errorPrefix: "Could not load projects");
 
     private Task AddProjectAsync()
         => RunGuardedAsync(

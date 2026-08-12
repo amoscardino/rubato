@@ -23,6 +23,14 @@ public abstract class CancellableComponentBase : ComponentBase, IDisposable
     protected string? Error { get; set; }
 
     /// <summary>
+    /// True while <see cref="RunInitialLoadAsync"/> is fetching what the page needs before it can
+    /// render anything, for showing a loader in place of the page. Distinct from
+    /// <see cref="IsBusy"/>, which covers work done on a page already on screen. Starts true so the
+    /// first paint is the loader rather than an empty page.
+    /// </summary>
+    protected bool IsLoading { get; private set; } = true;
+
+    /// <summary>
     /// Runs <paramref name="work"/> with the component's cancellation token, holding
     /// <see cref="IsBusy"/> for the duration and turning a failure into <see cref="Error"/> rather
     /// than an exception. An exception escaping an event handler takes the whole Blazor circuit down,
@@ -69,6 +77,36 @@ public abstract class CancellableComponentBase : ComponentBase, IDisposable
         {
             await onSuccess.InvokeAsync();
         }
+    }
+
+    /// <summary>
+    /// Runs a load the page cannot render without, holding <see cref="IsLoading"/> for the duration
+    /// on top of everything <see cref="RunGuardedAsync"/> already does. Use it for the fetch behind
+    /// the loader; a refresh of a page already on screen should go through
+    /// <see cref="RunGuardedAsync"/> instead, so the loader does not flash over content the user is
+    /// looking at.
+    /// <para>
+    /// The flag is cleared however the load ends, because a failed load is still a finished load:
+    /// leave the loader up and the error it produced has nowhere to show.
+    /// </para>
+    /// </summary>
+    protected Task RunInitialLoadAsync(Func<CancellationToken, Task> load, string? errorPrefix = null)
+    {
+        IsLoading = true;
+
+        return RunGuardedAsync(
+            async token =>
+            {
+                try
+                {
+                    await load(token);
+                }
+                finally
+                {
+                    IsLoading = false;
+                }
+            },
+            errorPrefix: errorPrefix);
     }
 
     public virtual void Dispose()

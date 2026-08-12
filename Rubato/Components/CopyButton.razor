@@ -1,0 +1,9 @@
+@inherits CancellableComponentBase
+
+<button type="button"
+        class="btn @ButtonClass"
+        title="@ButtonTitle"
+        @onclick="CopyAsync"
+        disabled="@(string.IsNullOrWhiteSpace(Text))">
+    <i class="bi @IconClass"></i>
+</button>
