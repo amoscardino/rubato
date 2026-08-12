@@ -1,22 +1,22 @@
 @inherits CancellableComponentBase
 
-<div class="row g-2">
-    <div class="col-1">
+<tr>
+    <td>
         <textarea @bind="Entry.Time"
                   @bind:after="SaveEntryAsync"
                   class="form-control form-control-sm @(Entry.HasInvalidTime ? "border-danger" : "")"
                   title="@InvalidTimeMessage"
                   rows="@TimeRows"></textarea>
-    </div>
+    </td>
 
-    <div class="col-1">
+    <td>
         <input type="text"
                value="@Entry.Duration?.ToString("N2")"
                class="form-control form-control-sm text-end"
                disabled />
-    </div>
+    </td>
 
-    <div class="col-2">
+    <td>
         <select @bind="Entry.ProjectId"
                 @bind:after="SaveEntryAsync"
                 class="form-select form-select-sm"
@@ -27,16 +27,16 @@
                 <option value="@project.Id">@project.Name</option>
             }
         </select>
-    </div>
+    </td>
 
-    <div class="col-1">
+    <td>
         <input @bind="Entry.TaskId"
                @bind:after="SaveEntryAsync"
                type="text"
                class="form-control form-control-sm" />
-    </div>
+    </td>
 
-    <div class="col">
+    <td>
         <div class="input-group input-group-sm">
             <input @bind="Entry.Description"
                    @bind:after="SaveEntryAsync"
@@ -44,30 +44,30 @@
                    class="form-control form-control-sm" />
             <CopyButton Text="@Entry.ClipboardText" />
         </div>
-    </div>
 
-    <div class="col-1">
-        <input @bind="Entry.SortOrder"
-               @bind:after="SaveEntryAsync"
-               type="text"
-               inputmode="numeric"
-               pattern="[0-9]*"
-               class="form-control form-control-sm" />
-    </div>
+        @if (Error is not null)
+        {
+            <div class="alert alert-danger small mt-1 mb-0 p-1">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                @Error
+            </div>
+        }
+    </td>
 
-    @if (Error is not null)
-    {
-        <div class="col-auto d-flex align-items-center text-danger" title="@Error">
-            <i class="bi bi-exclamation-triangle-fill"></i>
+    <td>
+        <div class="input-group input-group-sm">
+            <input @bind="Entry.SortOrder"
+                   @bind:after="SaveEntryAsync"
+                   type="text"
+                   inputmode="numeric"
+                   pattern="[0-9]*"
+                   class="form-control form-control-sm" />
+            <button type="button"
+                    class="btn btn-sm btn-outline-danger"
+                    @onclick="DeleteEntryAsync"
+                    disabled="@IsBusy">
+                <i class="bi bi-trash"></i>
+            </button>
         </div>
-    }
-
-    <div class="col-auto">
-        <button type="button"
-                class="btn btn-sm btn-outline-danger"
-                @onclick="DeleteEntryAsync"
-                disabled="@IsBusy">
-            <i class="bi bi-trash"></i>
-        </button>
-    </div>
-</div>
+    </td>
+</tr>
