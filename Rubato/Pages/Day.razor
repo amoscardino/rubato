@@ -96,18 +96,24 @@
             </div>
 
             <div class="row align-items-end">
-                <div class="col">
-                    Total:
-                    <strong class="@(TotalHours >= 8 ? "text-success" : "")">
-                        @TotalHours.ToString("N2")
-                    </strong>
+                <div class="col-1">
+                    <div class="hstack justify-content-between">
+                        <span>
+                            Total:
+                        </span>
+                        <strong class="@(TotalHours >= 8 ? "text-success" : "")">
+                            @TotalHours.ToString("N2")
+                        </strong>
+                    </div>
 
-                    <br />
-
-                    Week:
-                    <strong class="@(WeekTotalHours >= 40 ? "text-success" : "")">
-                        @WeekTotalHours.ToString("N2")
-                    </strong>
+                    <div class="hstack justify-content-between">
+                        <span>
+                            Week:
+                        </span>
+                        <strong class="@(WeekTotalHours >= 40 ? "text-success" : "")">
+                            @WeekTotalHours.ToString("N2")
+                        </strong>
+                    </div>
                 </div>
 
                 @if (HasInvalidTimes)
