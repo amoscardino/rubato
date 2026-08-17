@@ -26,13 +26,13 @@ builder.Services.AddDbContextFactory<RubatoDataContext>(options =>
 
 // Data Protection and the startup migration resolve the context from a scope, so keep a scoped
 // registration alongside the factory. Both create their own scope per operation.
-builder.Services.AddScoped<RubatoDataContext>(services =>
-    services.GetRequiredService<IDbContextFactory<RubatoDataContext>>().CreateDbContext());
+builder.Services.AddScoped(services => services.GetRequiredService<IDbContextFactory<RubatoDataContext>>().CreateDbContext());
 
 builder.Services.AddDataProtection().PersistKeysToDbContext<RubatoDataContext>();
 
 builder.Services.AddTransient<EntryService>();
 builder.Services.AddTransient<ProjectService>();
+builder.Services.AddHttpClient<SevenPaceService>();
 
 var app = builder.Build();
 

@@ -1,0 +1,33 @@
+@inherits CancellableComponentBase
+
+<div class="hstack gap-2">
+    <button type="button"
+            class="btn btn-secondary text-nowrap"
+            @onclick="PushAsync"
+            disabled="@(!CanPush)">
+        <i class="bi bi-cloud-upload"></i>
+        Push to 7Pace
+    </button>
+
+    @if (IsPushing)
+    {
+        <span>
+            <span class="spinner-border spinner-border-sm"></span>
+            Pushing...
+        </span>
+    }
+    else if (PushedWorkLogs is int pushed)
+    {
+        <span class="text-success">
+            <i class="bi bi-check-circle"></i>
+            Pushed @pushed worklog@(pushed == 1 ? "" : "s").
+        </span>
+    }
+    else if (Error is not null)
+    {
+        <span class="text-danger">
+            <i class="bi bi-exclamation-triangle"></i>
+            @Error
+        </span>
+    }
+</div>

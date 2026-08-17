@@ -44,6 +44,7 @@ public class ProjectService(IDbContextFactory<RubatoDataContext> dataContextFact
 
         projectData.Name = projectModel.Name;
         projectData.Color = projectModel.Color;
+        projectData.WorkItemId = projectModel.WorkItemId;
 
         await dataContext.SaveChangesAsync(cancellationToken);
     }

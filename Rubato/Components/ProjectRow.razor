@@ -17,10 +17,17 @@
     </td>
 
     <td>
+        <input @bind="Project.WorkItemId"
+               @bind:after="SaveProjectAsync"
+               type="text"
+               class="form-control form-control-sm" />
+    </td>
+
+    <td>
         <input @bind="Project.Color"
                @bind:after="SaveProjectAsync"
-               type="color"
-               class="form-control form-control-color form-control-sm"
+               type="text"
+               class="form-control form-control-sm"
                title="Project color" />
     </td>
 </tr>

@@ -116,6 +116,12 @@
                     </div>
                 </div>
 
+                <div class="col">
+                    <SevenPacePushButton @key="Date"
+                                         Date="Date"
+                                         HasEntries="Entries.Count > 0" />
+                </div>
+
                 @if (HasInvalidTimes)
                 {
                     <div class="col text-center text-danger">
@@ -124,7 +130,7 @@
                     </div>
                 }
 
-                <div class="col text-end">
+                <div class="col-auto text-end">
                     <button type="button" class="btn btn-primary" @onclick="AddEntryAsync">
                         Add Entry
                     </button>

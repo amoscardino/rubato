@@ -26,14 +26,18 @@
                     <div class="card-body p-2">
                         <table class="table table-borderless table-sm mb-0">
                             <colgroup>
-                                <col class="col-11" />
-                                <col class="col-1" />
+                                <col class="col-7" />
+                                <col class="col-3" />
+                                <col class="col-2" />
                             </colgroup>
 
                             <thead>
                                 <tr>
                                     <th>
                                         Name
+                                    </th>
+                                    <th>
+                                        Work Item ID
                                     </th>
                                     <th>
                                         Color
@@ -50,7 +54,7 @@
                                 @if (ProjectList.Count == 0)
                                 {
                                     <tr>
-                                        <td colspan="2" class="text-center text-muted py-3">
+                                        <td colspan="3" class="text-center text-muted py-3">
                                             No projects yet.
                                         </td>
                                     </tr>

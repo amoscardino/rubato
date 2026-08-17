@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Rubato.Data;
 
@@ -10,9 +11,11 @@ using Rubato.Data;
 namespace Rubato.Data.Migrations
 {
     [DbContext(typeof(RubatoDataContext))]
-    partial class RubatoDataContextModelSnapshot : ModelSnapshot
+    [Migration("20260817132128_AddProjectWorkItemId")]
+    partial class AddProjectWorkItemId
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.11");

@@ -4,6 +4,9 @@
     "inputmode",
     "onchange",
     "onclick",
-    "vstack"
+    "Pushable",
+    "vstack",
+    "worklog",
+    "worklogs"
   ]
 }
