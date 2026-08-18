@@ -42,19 +42,20 @@
                                     <th>
                                         Color
                                     </th>
+                                    <th></th>
                                 </tr>
                             </thead>
 
                             <tbody>
                                 @foreach (var project in ProjectList)
                                 {
-                                    <ProjectRow @key="project.Id" Project="project" />
+                                    <ProjectRow @key="project.Id" Project="project" OnProjectDeleted="ReloadProjectsAsync" />
                                 }
 
                                 @if (ProjectList.Count == 0)
                                 {
                                     <tr>
-                                        <td colspan="3" class="text-center text-muted py-3">
+                                        <td colspan="4" class="text-center text-muted py-3">
                                             No projects yet.
                                         </td>
                                     </tr>

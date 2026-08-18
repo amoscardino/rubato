@@ -24,10 +24,20 @@
     </td>
 
     <td>
-        <input @bind="Project.Color"
-               @bind:after="SaveProjectAsync"
-               type="text"
-               class="form-control form-control-sm"
-               title="Project color" />
+            <input @bind="Project.Color"
+                   @bind:after="SaveProjectAsync"
+                   type="text"
+                   class="form-control form-control-sm"
+                   title="Project color" />
+    </td>
+
+    <td class="text-end">
+            <button type="button"
+                    class="btn btn-sm btn-outline-danger"
+                    @onclick="DeleteProjectAsync"
+                    title="@DeleteMessage"
+                    disabled="@(IsBusy || !Project.CanDelete)">
+                <i class="bi bi-trash"></i>
+            </button>
     </td>
 </tr>

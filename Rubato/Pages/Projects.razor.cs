@@ -11,9 +11,18 @@ public partial class Projects
     private List<ProjectModel> ProjectList { get; set; } = [];
 
     protected override Task OnInitializedAsync()
-        => RunInitialLoadAsync(
-            async token => ProjectList = await ProjectService.GetProjectsAsync(token),
-            errorPrefix: "Could not load projects");
+        => RunInitialLoadAsync(LoadProjectsAsync, errorPrefix: "Could not load projects");
+
+    /// <summary>
+    /// Refetches the list after a row deleted itself. Deliberately not
+    /// <see cref="CancellableComponentBase.RunInitialLoadAsync"/>: the page is already on screen, and
+    /// a full reload is what drops the deleted row and picks up any entry counts that have moved.
+    /// </summary>
+    private Task ReloadProjectsAsync()
+        => RunGuardedAsync(LoadProjectsAsync, errorPrefix: "Could not load projects");
+
+    private async Task LoadProjectsAsync(CancellationToken cancellationToken)
+        => ProjectList = await ProjectService.GetProjectsAsync(cancellationToken);
 
     private Task AddProjectAsync()
         => RunGuardedAsync(
