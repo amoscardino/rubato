@@ -3,11 +3,10 @@ using Rubato.Services;
 
 namespace Rubato.Components;
 
-/// <summary>
-/// Pushes a day's entries to 7Pace and reports what the push replaced and created.
-/// </summary>
 public partial class SevenPacePushButton
 {
+    private static readonly TimeSpan SuccessLifetime = TimeSpan.FromSeconds(5);
+
     [Inject] private SevenPaceService SevenPaceService { get; set; } = default!;
 
     [Parameter] public DateOnly Date { get; set; }
@@ -24,6 +23,8 @@ public partial class SevenPacePushButton
 
     private bool CanPush => HasEntries && !IsPushing;
 
+    private CancellationTokenSource? _dismissCancellation;
+
     private async Task PushAsync()
     {
         if (!CanPush)
@@ -32,6 +33,7 @@ public partial class SevenPacePushButton
         }
 
         IsPushing = true;
+        CancelPendingDismissal();
         Created = Deleted = null;
 
         await RunGuardedAsync(
@@ -47,5 +49,45 @@ public partial class SevenPacePushButton
                 }
             },
             errorPrefix: "Not pushed");
+
+        if (Created is not null)
+        {
+            await DismissSuccessAfterDelayAsync();
+        }
+    }
+
+    private async Task DismissSuccessAfterDelayAsync()
+    {
+        // Linked to the component's own token so disposal ends the wait rather than leaving a timer
+        // holding a component that is already gone.
+        var cancellation = CancellationTokenSource.CreateLinkedTokenSource(CancellationToken);
+        _dismissCancellation = cancellation;
+
+        try
+        {
+            await Task.Delay(SuccessLifetime, cancellation.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+        finally
+        {
+            if (_dismissCancellation == cancellation)
+            {
+                _dismissCancellation = null;
+            }
+
+            cancellation.Dispose();
+        }
+
+        Created = Deleted = null;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void CancelPendingDismissal()
+    {
+        _dismissCancellation?.Cancel();
+        _dismissCancellation = null;
     }
 }
