@@ -128,9 +128,9 @@ public class SevenPaceService(IDbContextFactory<RubatoDataContext> dataContextFa
                 continue;
             }
 
-            var label = string.IsNullOrWhiteSpace(entry.Entry.ClipboardText)
+            var label = string.IsNullOrWhiteSpace(entry.Entry.Label)
                 ? $"entry {entry.Entry.Id}"
-                : entry.Entry.ClipboardText;
+                : entry.Entry.Label;
 
             if (!int.TryParse(entry.WorkItemId, out var workItemId))
             {
@@ -144,7 +144,7 @@ public class SevenPaceService(IDbContextFactory<RubatoDataContext> dataContextFa
                     seconds,
                     seconds,
                     workItemId,
-                    entry.Entry.ClipboardText,
+                    entry.Entry.Label,
                     settings.UserId,
                     ActivityTypeIdFor(entry.Entry, settings))));
         }

@@ -31,7 +31,11 @@ public partial class EntryModel
     public IReadOnlyList<string> InvalidTimeLines => ParseTime().InvalidLines;
     public bool HasInvalidTime => InvalidTimeLines.Count > 0;
 
-    public string ClipboardText
+    /// <summary>
+    /// The entry as one line — "task id - description", or whichever of the two it has. 7Pace labels
+    /// and comments its worklogs with it.
+    /// </summary>
+    public string Label
     {
         get
         {

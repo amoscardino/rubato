@@ -32,6 +32,9 @@ public partial class EntryRow
     private Task SaveEntryAsync()
         => RunGuardedAsync(token => EntryService.UpdateEntryAsync(Entry, token), OnEntryChanged, "Not saved");
 
+    private Task CloneEntryAsync()
+        => RunGuardedAsync(token => EntryService.CloneEntryAsync(Entry, token), OnEntryChanged, "Not cloned");
+
     private Task DeleteEntryAsync()
         => RunGuardedAsync(token => EntryService.DeleteEntryAsync(Entry.Id, token), OnEntryChanged, "Not deleted");
 }

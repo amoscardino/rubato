@@ -50,23 +50,6 @@
 
         window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', setTheme);
         setTheme();
-
-        window.copyToClipboard = async (text) => {
-            if (navigator.clipboard && window.isSecureContext) {
-                await navigator.clipboard.writeText(text);
-                return;
-            }
-
-            // Fallback for non-secure contexts, where the clipboard API is unavailable
-            const textArea = document.createElement('textarea');
-            textArea.value = text;
-            textArea.style.position = 'fixed';
-            textArea.style.opacity = '0';
-            document.body.appendChild(textArea);
-            textArea.select();
-            document.execCommand('copy');
-            textArea.remove();
-        };
     </script>
 </body>
 

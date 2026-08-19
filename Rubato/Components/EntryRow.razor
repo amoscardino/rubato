@@ -42,7 +42,13 @@
                    @bind:after="SaveEntryAsync"
                    type="text"
                    class="form-control form-control-sm" />
-            <CopyButton Text="@Entry.ClipboardText" />
+            <button type="button"
+                    class="btn btn-sm btn-outline-secondary"
+                    title="Clone this entry"
+                    @onclick="CloneEntryAsync"
+                    disabled="@IsBusy">
+                <i class="bi bi-copy"></i>
+            </button>
         </div>
 
         @if (Error is not null)

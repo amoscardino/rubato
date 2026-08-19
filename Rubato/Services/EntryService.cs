@@ -89,6 +89,20 @@ public class EntryService(IDbContextFactory<RubatoDataContext> dataContextFactor
         return true;
     }
 
+    /// <summary>
+    /// Adds a copy of <paramref name="entryModel"/> as a new entry on the same day. The copy comes from
+    /// the model the row is holding rather than a fresh read — every field saves as it changes, so that
+    /// model is the row as the user sees it — and <see cref="EntryModel.ToData"/> leaves the id behind,
+    /// so this adds a row rather than overwriting the one being cloned.
+    /// </summary>
+    public async Task CloneEntryAsync(EntryModel entryModel, CancellationToken cancellationToken = default)
+    {
+        await using var dataContext = await dataContextFactory.CreateDbContextAsync(cancellationToken);
+
+        dataContext.Entries.Add(entryModel.ToData());
+        await dataContext.SaveChangesAsync(cancellationToken);
+    }
+
     public async Task DeleteEntryAsync(long entryId, CancellationToken cancellationToken = default)
     {
         await using var dataContext = await dataContextFactory.CreateDbContextAsync(cancellationToken);

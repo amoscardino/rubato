@@ -4,10 +4,10 @@ using Rubato.Services;
 namespace Rubato.Components;
 
 /// <summary>
-/// Pushes a day's entries to 7Pace and reports how many worklogs it created. Like
-/// <see cref="CopyButton"/>, it takes plain values and keeps the rest to itself — the service call, the
-/// in-flight state, the count, and the failure — so the day page hands it a date and reads nothing back:
-/// a push changes nothing the page derives, so there is no callback to relay.
+/// Pushes a day's entries to 7Pace and reports how many worklogs it created. It takes plain values and
+/// keeps the rest to itself — the service call, the in-flight state, the count, and the failure — so the
+/// day page hands it a date and reads nothing back: a push changes nothing the page derives, so there is
+/// no callback to relay.
 /// <para>
 /// Give it <c>@key="Date"</c> so a new day is a new instance. That is what clears a stale count, and it
 /// cancels a push still in flight for the day being navigated away from rather than letting it land its
