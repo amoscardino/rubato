@@ -16,11 +16,11 @@
             Pushing...
         </span>
     }
-    else if (PushedWorkLogs is int pushed)
+    else if (Created is not null)
     {
         <span class="text-success">
             <i class="bi bi-check-circle"></i>
-            Pushed @pushed worklog@(pushed == 1 ? "" : "s").
+            Pushed @Created worklog@(Created == 1 ? "" : "s")@(Deleted > 0 ? $", replacing {Deleted}" : "").
         </span>
     }
     else if (Error is not null)
