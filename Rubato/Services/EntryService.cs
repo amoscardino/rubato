@@ -90,16 +90,49 @@ public class EntryService(IDbContextFactory<RubatoDataContext> dataContextFactor
     }
 
     /// <summary>
-    /// Adds a copy of <paramref name="entryModel"/> as a new entry on the same day. The copy comes from
-    /// the model the row is holding rather than a fresh read — every field saves as it changes, so that
-    /// model is the row as the user sees it — and <see cref="EntryModel.ToData"/> leaves the id behind,
-    /// so this adds a row rather than overwriting the one being cloned.
+    /// Adds a copy of <paramref name="entryModel"/> as a new entry on the same day, with no time of its
+    /// own and the next free sort order after the source's. The copy comes from the model the row is
+    /// holding rather than a fresh read — every field saves as it changes, so that model is the row as
+    /// the user sees it — and <see cref="EntryModel.ToData"/> leaves the id behind, so this adds a row
+    /// rather than overwriting the one being cloned.
     /// </summary>
     public async Task CloneEntryAsync(EntryModel entryModel, CancellationToken cancellationToken = default)
     {
         await using var dataContext = await dataContextFactory.CreateDbContextAsync(cancellationToken);
 
-        dataContext.Entries.Add(entryModel.ToData());
+        var entryData = entryModel.ToData();
+
+        // A clone is a template for work still to be logged, not a second copy of hours already
+        // worked: repeating the source row's times would double the day total the moment it is
+        // cloned. Duration is only the denormalized copy of what the time text parses to, so it
+        // clears alongside it and the two stay in agreement.
+        entryData.Time = null;
+        entryData.Duration = null;
+
+        // The clone belongs directly after its source, so it takes the next sort order up — walking
+        // past any that the day has already handed out, since duplicates would leave the two rows'
+        // order down to the Time tiebreak and the clone has no time yet. An unnumbered source has no
+        // number to count from and stays unnumbered, sorting last alongside its source.
+        if (entryData.SortOrder is int sourceSortOrder)
+        {
+            var takenSortOrders = await dataContext.Entries
+                .AsNoTracking()
+                .Where(e => e.Date == entryData.Date && e.SortOrder != null)
+                .Select(e => e.SortOrder!.Value)
+                .ToHashSetAsync(cancellationToken);
+
+            var sortOrder = sourceSortOrder;
+
+            do
+            {
+                sortOrder++;
+            }
+            while (takenSortOrders.Contains(sortOrder));
+
+            entryData.SortOrder = sortOrder;
+        }
+
+        dataContext.Entries.Add(entryData);
         await dataContext.SaveChangesAsync(cancellationToken);
     }
 
