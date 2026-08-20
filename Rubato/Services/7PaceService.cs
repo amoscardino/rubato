@@ -288,7 +288,7 @@ public class SevenPaceService(IDbContextFactory<RubatoDataContext> dataContextFa
     private static string BuildUrl(SevenPaceSettings settings, string resource, params (string Key, string Value)[] query)
     {
         var parameters = query
-            .Prepend((Key: "api-version", Value: settings.ApiVersion))
+            .Prepend((Key: "api-version", Value: "3.2"))
             .Select(p => $"{Uri.EscapeDataString(p.Key)}={Uri.EscapeDataString(p.Value)}");
 
         return $"{settings.ApiUrl.TrimEnd('/')}/api/rest/{resource}?{string.Join("&", parameters)}";
@@ -327,7 +327,6 @@ public class SevenPaceService(IDbContextFactory<RubatoDataContext> dataContextFa
         return new SevenPaceSettings(
             Required("ApiUrl"),
             Required("ApiKey"),
-            Required("ApiVersion"),
             Required("UserId"),
             Required("MeetingActivityTypeId"),
             Required("DevelopmentActivityTypeId"),
@@ -373,7 +372,6 @@ public class SevenPaceService(IDbContextFactory<RubatoDataContext> dataContextFa
     private sealed record SevenPaceSettings(
         string ApiUrl,
         string ApiKey,
-        string ApiVersion,
         string UserId,
         string MeetingActivityTypeId,
         string DevelopmentActivityTypeId,
