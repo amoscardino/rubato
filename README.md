@@ -81,9 +81,22 @@ dotnet ef migrations add <Name>
 
 The `Dockerfile` produces a self-contained ASP.NET image listening on port 5161 and expects the SQLite database on the `/etc/rubato` volume.
 
+Images are built and pushed by the `Publish image` GitHub Actions workflow, which publishes `ghcr.io/amoscardino/rubato` for `linux/amd64` and `linux/arm64`.
+
+- **Release:** push a `vX.Y.Z` tag. That publishes `X.Y.Z`, `X.Y` and `latest`.
+
+  ```bash
+  git tag v1.0.1 && git push origin v1.0.1
+  ```
+
+- **Ad hoc:** run the workflow manually from the Actions tab. Leave the version input blank to republish `latest` only, or type a version to also tag it.
+
+The images are published to the repo's GitHub Packages, which start out private. Either make the package public from its settings page, or `docker login ghcr.io` on the host with a personal access token that has `read:packages`.
+
+To build locally without Actions:
+
 ```bash
-docker build . -t amoscardino/rubato:X.Y.Z -t amoscardino/rubato --platform=linux/amd64,linux/arm64
-docker push amoscardino/rubato -a 
+docker build . -t rubato
 ```
 
 Deploy using `docker compose`:
@@ -92,7 +105,7 @@ Deploy using `docker compose`:
 services:
   rubato:
     restart: unless-stopped
-    image: amoscardino/rubato:latest
+    image: ghcr.io/amoscardino/rubato:latest
     ports:
       - 5161:5161 
     volumes:
@@ -103,7 +116,7 @@ services:
       - 7Pace__MeetingActivityTypeId=00000000-0000-0000-0000-000000000000
       - 7Pace__DevelopmentActivityTypeId=00000000-0000-0000-0000-000000000000
       - 7Pace__DeploymentActivityTypeId=00000000-0000-0000-0000-000000000000
-      # The rest of the API path including `/api` will be appended automatically. Uses API version 3.2
+      # The rest of the API path including `/api` will be appended automatically. Uses API version 3.2.
       - 7Pace__ApiUrl=https://yourdomain.timehub.7pace.com 
       - 7Pace__ApiKey=000000000000000000000000000000000000000000000000
 ```
