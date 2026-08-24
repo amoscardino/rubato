@@ -241,7 +241,7 @@ public class SevenPaceService(IDbContextFactory<RubatoDataContext> dataContextFa
 
             workLogs.AddRange(page
                 .Where(w => !string.IsNullOrWhiteSpace(w.Id))
-                .Where(w => DateOnly.FromDateTime(w.Timestamp) == day)
+                .Where(w => w.Day == day)
                 .Where(w => w.User?.Id is null || string.Equals(w.User.Id, settings.UserId, StringComparison.OrdinalIgnoreCase)));
 
             if (page.Count < PageSize)
@@ -363,8 +363,19 @@ public class SevenPaceService(IDbContextFactory<RubatoDataContext> dataContextFa
 
     private sealed record ExistingWorkLog(
         [property: JsonPropertyName("id")] string Id,
-        [property: JsonPropertyName("timestamp")] DateTime Timestamp,
-        [property: JsonPropertyName("user")] WorkLogUser? User);
+        [property: JsonPropertyName("timestamp")] DateTimeOffset Timestamp,
+        [property: JsonPropertyName("user")] WorkLogUser? User)
+    {
+        /// <summary>
+        /// The date 7Pace filed the worklog under, read as the wall clock the payload actually names and
+        /// so independent of this process's zone. A bare <see cref="DateTime"/> was not: System.Text.Json
+        /// converts an offset-bearing timestamp to local time, so once TZ is set to anything but UTC a
+        /// midnight-with-offset stamp read as the day before, dropped out of this filter, and survived the
+        /// delete — leaving the push to post alongside the worklogs it meant to replace, which is the
+        /// doubled day <see cref="PushDayAsync"/> exists to prevent.
+        /// </summary>
+        public DateOnly Day => DateOnly.FromDateTime(Timestamp.DateTime);
+    }
 
     private sealed record WorkLogUser(
         [property: JsonPropertyName("id")] string? Id);

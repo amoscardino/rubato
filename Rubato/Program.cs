@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
+using Rubato;
 using Rubato.Data;
 using Rubato.Pages;
 using Rubato.Services;
@@ -30,6 +31,10 @@ builder.Services.AddScoped(services => services.GetRequiredService<IDbContextFac
 
 builder.Services.AddDataProtection().PersistKeysToDbContext<RubatoDataContext>();
 
+// Singleton: the configured zone is read once, and resolving it below means a bad TimeZone setting
+// stops the launch instead of throwing on the first page render.
+builder.Services.AddSingleton<Clock>();
+
 builder.Services.AddTransient<EntryService>();
 builder.Services.AddTransient<ProjectService>();
 builder.Services.AddHttpClient<SevenPaceService>();
@@ -38,6 +43,9 @@ var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
+    var clock = scope.ServiceProvider.GetRequiredService<Clock>();
+    app.Logger.LogInformation("Today is {Today:yyyy-MM-dd} in {TimeZone}.", clock.Today, clock.TimeZoneId);
+
     var db = scope.ServiceProvider.GetRequiredService<RubatoDataContext>();
     db.Database.Migrate();
 

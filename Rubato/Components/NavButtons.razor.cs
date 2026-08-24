@@ -5,6 +5,7 @@ namespace Rubato.Components;
 public partial class NavButtons
 {
     [Inject] private NavigationManager NavigationManager { get; set; } = default!;
+    [Inject] private Clock Clock { get; set; } = default!;
 
     [Parameter] public DateOnly Date { get; set; }
 

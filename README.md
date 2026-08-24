@@ -52,12 +52,15 @@ dotnet watch --project Rubato
 | Key | Purpose | Default |
 | --- | --- | --- |
 | `DataPath` | Directory holding `Rubato.db` | `Database/` (`/etc/rubato` in Docker) |
+| `TimeZone` | IANA id (e.g. `America/New_York`) deciding what "today" means | the process's own zone (`TZ`, or UTC in Docker) |
 | `7Pace:ApiUrl` | 7Pace instance base URL | — |
 | `7Pace:ApiKey` | 7Pace API token | — |
 | `7Pace:UserId` | The user whose worklogs a push replaces | — |
 | `7Pace:MeetingActivityTypeId` | Activity type for entries with sort order 1–9 | — |
 | `7Pace:DevelopmentActivityTypeId` | Activity type for sort order 10 and up | — |
 | `7Pace:DeploymentActivityTypeId` | Activity type when the description mentions a deployment | — |
+
+`TimeZone` is worth setting for any deployment west of UTC. The app is day-oriented, so "today" — the day the page opens on, the Today button, whether the previous day can be copied — comes from a single clock, and a container has no local zone unless one is handed to it. Left at UTC, an evening entry is filed under tomorrow's date. Setting the `TZ` environment variable works too; `TimeZone` just says so where the rest of the configuration lives, and an id the machine cannot resolve stops the launch rather than quietly reverting to UTC.
 
 The 7Pace values are secrets and should live in user secrets rather than `appsettings.json` for development. Environment variables should be used when deployed.
 
@@ -112,6 +115,7 @@ services:
       - /path/to/host/data:/etc/rubato:rw
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
+      - TimeZone=America/New_York
       - 7Pace__UserId=00000000-0000-0000-0000-000000000000
       - 7Pace__MeetingActivityTypeId=00000000-0000-0000-0000-000000000000
       - 7Pace__DevelopmentActivityTypeId=00000000-0000-0000-0000-000000000000

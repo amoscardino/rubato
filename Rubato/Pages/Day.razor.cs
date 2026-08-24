@@ -8,6 +8,7 @@ public partial class Day
 {
     [Inject] private EntryService EntryService { get; set; } = default!;
     [Inject] private ProjectService ProjectService { get; set; } = default!;
+    [Inject] private Clock Clock { get; set; } = default!;
 
     [Parameter] public DateTime? DateParam { get; set; }
 
