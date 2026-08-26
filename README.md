@@ -32,6 +32,8 @@ Entries for a day can be pushed to 7Pace with the push of a button. Only entries
 
 If the day contains an entry with a sort order of 0, then the duration of that particular entry will be added to the first non-meeting entry.
 
+This feature must be enabled by setting the `7Pace:Enabled` setting (or `7Pace__Enabled` environment variable) to `true` as well as providing the other setting values for 7Pace.
+
 ## Running locally
 
 Run from the repo root.
@@ -53,6 +55,7 @@ dotnet watch --project Rubato
 | --- | --- | --- |
 | `DataPath` | Directory holding `Rubato.db` | `Database/` (`/etc/rubato` in Docker) |
 | `TimeZone` | IANA id (e.g. `America/New_York`) deciding what "today" means | the process's own zone (`TZ`, or UTC in Docker) |
+| `7Pace:Enabled` | If 7Pace push should be enabled | false |
 | `7Pace:ApiUrl` | 7Pace instance base URL | — |
 | `7Pace:ApiKey` | 7Pace API token | — |
 | `7Pace:UserId` | The user whose worklogs a push replaces | — |
@@ -116,6 +119,7 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - TimeZone=America/New_York
+      - 7Pace__Enabled=true
       - 7Pace__UserId=00000000-0000-0000-0000-000000000000
       - 7Pace__MeetingActivityTypeId=00000000-0000-0000-0000-000000000000
       - 7Pace__DevelopmentActivityTypeId=00000000-0000-0000-0000-000000000000

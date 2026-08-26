@@ -35,6 +35,10 @@ builder.Services.AddDataProtection().PersistKeysToDbContext<RubatoDataContext>()
 // stops the launch instead of throwing on the first page render.
 builder.Services.AddSingleton<Clock>();
 
+// Singleton for the same reason: the 7Pace enabled flag is read once rather than re-bound every time
+// the Day page renders. See SevenPaceOptions.
+builder.Services.AddSingleton<SevenPaceOptions>();
+
 builder.Services.AddTransient<EntryService>();
 builder.Services.AddTransient<ProjectService>();
 builder.Services.AddHttpClient<SevenPaceService>();

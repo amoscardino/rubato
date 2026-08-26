@@ -4,10 +4,14 @@ using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using Rubato.Data;
 using Rubato.Models;
+using static Rubato.Services.SevenPaceOptions;
 
 namespace Rubato.Services;
 
-public class SevenPaceService(IDbContextFactory<RubatoDataContext> dataContextFactory, IConfiguration configuration, HttpClient httpClient)
+public class SevenPaceService(
+    IDbContextFactory<RubatoDataContext> dataContextFactory,
+    SevenPaceOptions options,
+    HttpClient httpClient)
 {
     /// <summary>
     /// Replaces a day in 7Pace with what Rubato holds: every worklog the push user already has on that
@@ -17,7 +21,12 @@ public class SevenPaceService(IDbContextFactory<RubatoDataContext> dataContextFa
     /// </summary>
     public async Task<(int Created, int Deleted)> PushDayAsync(DateOnly day, CancellationToken cancellationToken = default)
     {
-        var settings = ReadSettings();
+        if (!options.IsEnabled)
+        {
+            throw new InvalidOperationException("7Pace is not enabled in the configuration.");
+        }
+
+        var settings = options.ReadSettings();
         var entries = await GetEntriesAsync(day, cancellationToken);
 
         // Unreadable time lines are the one thing that must stop the push. The parser deliberately never
@@ -35,7 +44,7 @@ public class SevenPaceService(IDbContextFactory<RubatoDataContext> dataContextFa
         }
 
         // Built before anything is deleted, so a day that cannot produce worklogs (no linked work item IDs,
-        // an unparseable one) fails with 7Pace untouched rather than wiped.
+        // an un-parseable one) fails with 7Pace untouched rather than wiped.
         var workLogs = BuildWorkLogs(entries, settings);
 
         if (workLogs.Count == 0)
@@ -320,28 +329,6 @@ public class SevenPaceService(IDbContextFactory<RubatoDataContext> dataContextFa
         }
     }
 
-    private SevenPaceSettings ReadSettings()
-    {
-        var section = configuration.GetSection("7Pace");
-
-        return new SevenPaceSettings(
-            Required("ApiUrl"),
-            Required("ApiKey"),
-            Required("UserId"),
-            Required("MeetingActivityTypeId"),
-            Required("DevelopmentActivityTypeId"),
-            Required("DeploymentActivityTypeId"));
-
-        string Required(string key)
-        {
-            var value = section[key];
-
-            return string.IsNullOrWhiteSpace(value)
-                ? throw new InvalidOperationException($"7Pace:{key} is not configured.")
-                : value;
-        }
-    }
-
     private const int PageSize = 500;
     private const string TimestampFormat = "yyyy-MM-ddTHH:mm:ss";
 
@@ -379,12 +366,4 @@ public class SevenPaceService(IDbContextFactory<RubatoDataContext> dataContextFa
 
     private sealed record WorkLogUser(
         [property: JsonPropertyName("id")] string? Id);
-
-    private sealed record SevenPaceSettings(
-        string ApiUrl,
-        string ApiKey,
-        string UserId,
-        string MeetingActivityTypeId,
-        string DevelopmentActivityTypeId,
-        string DeploymentActivityTypeId);
 }

@@ -117,9 +117,12 @@
                 </div>
 
                 <div class="col">
-                    <SevenPacePushButton @key="Date"
-                                         Date="Date"
-                                         HasEntries="Entries.Count > 0" />
+                    @if (SevenPaceEnabled)
+                    {
+                        <SevenPacePushButton @key="Date"
+                                             Date="Date"
+                                             HasEntries="Entries.Count > 0" />
+                    }
                 </div>
 
                 @if (HasInvalidTimes)

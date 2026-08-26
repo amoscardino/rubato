@@ -8,6 +8,7 @@ public partial class Day
 {
     [Inject] private EntryService EntryService { get; set; } = default!;
     [Inject] private ProjectService ProjectService { get; set; } = default!;
+    [Inject] private SevenPaceOptions SevenPaceOptions { get; set; } = default!;
     [Inject] private Clock Clock { get; set; } = default!;
 
     [Parameter] public DateTime? DateParam { get; set; }
@@ -25,6 +26,8 @@ public partial class Day
     private double TotalHours => Entries.Sum(e => e.Duration ?? 0);
 
     private bool HasInvalidTimes => Entries.Any(e => e.HasInvalidTime);
+
+    private bool SevenPaceEnabled => SevenPaceOptions.IsEnabled;
 
     /// <summary>
     /// The order the rows are shown in: by sort order, unnumbered rows last, then by time. This is the
