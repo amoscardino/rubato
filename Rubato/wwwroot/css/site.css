@@ -2,3 +2,7 @@
   --bs-body-font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace;
   font-size: 14px;
 }
+
+textarea.field-sizing-content {
+  field-sizing: content;
+}

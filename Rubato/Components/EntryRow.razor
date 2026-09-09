@@ -4,9 +4,8 @@
     <td>
         <textarea @bind="Entry.Time"
                   @bind:after="SaveEntryAsync"
-                  class="form-control form-control-sm @(Entry.HasInvalidTime ? "border-danger" : "")"
-                  title="@InvalidTimeMessage"
-                  rows="@TimeRows"></textarea>
+                  class="form-control form-control-sm field-sizing-content @(Entry.HasInvalidTime ? "border-danger" : "")"
+                  title="@InvalidTimeMessage"></textarea>
     </td>
 
     <td>

@@ -17,13 +17,6 @@ public partial class EntryRow
             ? $"--bs-border-color: {Projects.FirstOrDefault(p => p.Id == Entry.ProjectId)?.Color}"
             : string.Empty;
 
-    /// <summary>
-    /// The height the time textarea needs to show every line the user has typed, at least one. A lone
-    /// "\r" is not worth splitting on here — a browser sends "\n" or "\r\n", and the trailing "\r" the
-    /// latter leaves behind does not change the count.
-    /// </summary>
-    private int TimeRows => Math.Max(Entry.Time?.Split('\n').Length ?? 1, 1);
-
     private string? InvalidTimeMessage
         => Entry.HasInvalidTime
             ? $"Not a time range, so it adds no hours: {string.Join(", ", Entry.InvalidTimeLines)}"
