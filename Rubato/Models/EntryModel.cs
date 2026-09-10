@@ -23,7 +23,16 @@ public partial class EntryModel
         }
     }
 
-    public double? Duration => ParseTime().TotalHours;
+    public double? Duration
+    {
+        get
+        {
+            var hours = ParseTime().TotalHours;
+
+            return hours > 0 ? hours : null;
+        }
+    }
+
     public string? TaskId { get; set; }
     public string? Description { get; set; }
     public int? SortOrder { get; set; }
